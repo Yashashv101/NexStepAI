@@ -12,11 +12,13 @@ connectDB();
 
 // Route files
 const roadmapRoutes = require('./routes/roadmapRoutes');
-const resumeRoutes = require('./routes/resumeRoutes');
-const skillGapRoutes = require('./routes/skillGapRoutes');
-const resourceRoutes = require('./routes/resourceRoutes');
-const authRoutes = require('./routes/authRoutes');
 const goalRoutes = require('./routes/goalRoutes');
+
+// Placeholder for routes that will be implemented later
+const placeholderRouter = express.Router();
+placeholderRouter.get('/', (req, res) => {
+  res.status(200).json({ message: 'This endpoint is under development' });
+});
 
 const app = express();
 
@@ -34,10 +36,10 @@ app.get('/', (req, res) => {
 // Mount routers
 app.use('/api/goals', goalRoutes);
 app.use('/api/roadmaps', roadmapRoutes);
-app.use('/api/resumes', resumeRoutes);
-app.use('/api/skillgaps', skillGapRoutes);
-app.use('/api/resources', resourceRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/resumes', placeholderRouter);
+app.use('/api/skillgaps', placeholderRouter);
+app.use('/api/resources', placeholderRouter);
+app.use('/api/auth', placeholderRouter);
 
 // Error handler middleware
 app.use(errorHandler);
