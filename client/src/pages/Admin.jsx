@@ -1,11 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getGoals, createGoal } from '../services/api';
 
 function Admin() {
-  const [resources, setResources] = useState([
-    { id: 1, name: 'HTML & CSS Crash Course', category: 'Frontend', level: 'Beginner' },
-    { id: 2, name: 'JavaScript Fundamentals', category: 'Frontend', level: 'Beginner' },
-    { id: 3, name: 'React for Beginners', category: 'Frontend', level: 'Intermediate' },
-  ]);
+  const [resources, setResources] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const fetchGoals = async () => {
+      try {
+        setLoading(true);
+        const response = await getGoals();
+        
+        // Transform API data to match component structure
+        const formattedGoals = response.data.map(goal => ({
+          id: goal._id,
+          name: goal.name,
+          category: 'Learning',
+          level: 'All Levels'
+        }));
+        
+        setResources(formattedGoals);
+      } catch (err) {
+        console.error('Failed to fetch goals:', err);
+        setError('Failed to load resources. Please try again later.');
+        // Fallback to sample data
+        setResources([
+          { id: 1, name: 'HTML & CSS Crash Course', category: 'Frontend', level: 'Beginner' },
+          { id: 2, name: 'JavaScript Fundamentals', category: 'Frontend', level: 'Beginner' },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGoals();
+  }, []);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -21,18 +51,37 @@ function Admin() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newResource = {
-      id: resources.length + 1,
-      ...formData
-    };
-    setResources([...resources, newResource]);
-    setFormData({
-      name: '',
-      category: 'Frontend',
-      level: 'Beginner'
-    });
+    
+    try {
+      // Create goal data from form
+      const goalData = {
+        name: formData.name,
+        description: `${formData.category} resource for ${formData.level} level`
+      };
+      
+      // Send to API
+      const response = await createGoal(goalData);
+      
+      // Add to UI with API response data
+      const newResource = {
+        id: response.data._id,
+        name: response.data.name,
+        category: formData.category,
+        level: formData.level
+      };
+      
+      setResources([...resources, newResource]);
+      setFormData({
+        name: '',
+        category: 'Frontend',
+        level: 'Beginner'
+      });
+    } catch (err) {
+      console.error('Error creating resource:', err);
+      alert('Failed to create resource. Please try again.');
+    }
   };
 
   return (

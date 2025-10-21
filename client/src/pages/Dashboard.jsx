@@ -1,14 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getRoadmaps } from '../services/api';
 
 function Dashboard() {
-  // Mock roadmap data
-  const [roadmapItems, setRoadmapItems] = useState([
-    { id: 1, title: 'HTML & CSS Fundamentals', estimatedTime: '2 weeks', progress: 80, description: 'Learn the basics of HTML5 and CSS3 to build static web pages.' },
-    { id: 2, title: 'JavaScript Basics', estimatedTime: '3 weeks', progress: 65, description: 'Master JavaScript fundamentals including variables, functions, and DOM manipulation.' },
-    { id: 3, title: 'React Core Concepts', estimatedTime: '4 weeks', progress: 40, description: 'Learn React components, props, state, and lifecycle methods.' },
-    { id: 4, title: 'State Management', estimatedTime: '2 weeks', progress: 20, description: 'Understand state management with Context API and Redux.' },
-    { id: 5, title: 'Backend Integration', estimatedTime: '3 weeks', progress: 0, description: 'Connect your React app to backend services using REST APIs.' },
-  ]);
+  const [roadmapItems, setRoadmapItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchRoadmaps = async () => {
+      try {
+        setLoading(true);
+        const response = await getRoadmaps();
+        
+        // Transform API data to match component structure
+        const formattedRoadmaps = response.data.map((roadmap, index) => ({
+          id: roadmap._id || index + 1,
+          title: roadmap.steps[0]?.title || 'Untitled Step',
+          estimatedTime: roadmap.steps[0]?.duration || 'Unknown',
+          progress: Math.floor(Math.random() * 100), // Placeholder for actual progress
+          description: `Step ${index + 1} of your learning journey.`
+        }));
+        
+        setRoadmapItems(formattedRoadmaps);
+      } catch (err) {
+        console.error('Failed to fetch roadmaps:', err);
+        setError('Failed to load roadmap data. Please try again later.');
+        // Fallback to sample data if API fails
+        setRoadmapItems([
+          { id: 1, title: 'HTML & CSS Fundamentals', estimatedTime: '2 weeks', progress: 80, description: 'Learn the basics of HTML5 and CSS3 to build static web pages.' },
+          { id: 2, title: 'JavaScript Basics', estimatedTime: '3 weeks', progress: 65, description: 'Master JavaScript fundamentals including variables, functions, and DOM manipulation.' },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoadmaps();
+  }, []);
 
   // Calculate overall progress
   const totalProgress = roadmapItems.reduce((sum, item) => sum + item.progress, 0) / roadmapItems.length;
@@ -55,8 +83,17 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-        {roadmapItems.map((item) => (
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          <p>{error}</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+          {roadmapItems.map((item) => (
           <div key={item.id} className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="p-6">
               <div className="flex justify-between items-start mb-2">
@@ -90,20 +127,22 @@ function Dashboard() {
         ))}
       </div>
 
-      <div className="bg-indigo-50 rounded-xl p-6 border border-indigo-100">
-        <h2 className="text-xl font-semibold text-indigo-800 mb-4">Weekly Learning Stats</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <div className="text-2xl font-bold text-indigo-600">12.5 hrs</div>
-            <div className="text-sm text-gray-500">Time Spent This Week</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <div className="text-2xl font-bold text-green-600">3</div>
-            <div className="text-sm text-gray-500">Topics Completed</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <div className="text-2xl font-bold text-amber-600">5</div>
-            <div className="text-sm text-gray-500">Days Streak</div>
+      <div className="mt-10">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Weekly Learning Statistics</h2>
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-indigo-50 p-4 rounded-lg">
+              <div className="text-xl font-bold text-indigo-600">8.5 hours</div>
+              <div className="text-sm text-gray-500">Time Spent Learning</div>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="text-xl font-bold text-green-600">3 topics</div>
+              <div className="text-sm text-gray-500">Topics Completed</div>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="text-xl font-bold text-purple-600">12 days</div>
+              <div className="text-sm text-gray-500">Current Streak</div>
+            </div>
           </div>
         </div>
       </div>
