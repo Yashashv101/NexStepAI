@@ -4,7 +4,7 @@ import GoalSelection from './pages/GoalSelection';
 import SkillLevel from './pages/SkillLevel';
 import TimeSelection from './pages/TimeSelection';
 import Dashboard from './pages/Dashboard';
-import AdminPage from './pages/AdminPage';
+import Admin from './pages/Admin';
 
 function App() {
   return (
@@ -15,7 +15,7 @@ function App() {
           <Route path="/skill-level" element={<SkillLevel />} />
           <Route path="/time-selection" element={<TimeSelection />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </div>
     </Router>

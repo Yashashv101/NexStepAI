@@ -16,6 +16,7 @@ const resumeRoutes = require('./routes/resumeRoutes');
 const skillGapRoutes = require('./routes/skillGapRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
 const authRoutes = require('./routes/authRoutes');
+const goalRoutes = require('./routes/goalRoutes');
 
 const app = express();
 
@@ -25,7 +26,13 @@ app.use(express.json());
 // Enable CORS
 app.use(cors());
 
+// Base route
+app.get('/', (req, res) => {
+  res.json({ message: "Welcome to NexStep AI API" });
+});
+
 // Mount routers
+app.use('/api/goals', goalRoutes);
 app.use('/api/roadmaps', roadmapRoutes);
 app.use('/api/resumes', resumeRoutes);
 app.use('/api/skillgaps', skillGapRoutes);
