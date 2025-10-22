@@ -12,23 +12,30 @@ function Admin() {
         setLoading(true);
         const response = await getGoals();
         
-        // Transform API data to match component structure
-        const formattedGoals = response.data.map(goal => ({
-          id: goal._id,
-          name: goal.name,
-          category: 'Learning',
-          level: 'All Levels'
-        }));
-        
-        setResources(formattedGoals);
+        if (response.success && response.data) {
+          // Transform API data to match component structure
+          const formattedGoals = response.data.map(goal => ({
+            id: goal._id,
+            name: goal.name,
+            // Extract category and level from description if possible
+            // or use default values
+            category: goal.description?.includes('resource for') 
+              ? goal.description.split('resource for')[0].trim() 
+              : 'Learning',
+            level: goal.description?.includes('resource for') 
+              ? goal.description.split('resource for')[1].trim() 
+              : 'All Levels'
+          }));
+          
+          setResources(formattedGoals);
+        } else {
+          throw new Error('Invalid response format from API');
+        }
       } catch (err) {
         console.error('Failed to fetch goals:', err);
         setError('Failed to load resources. Please try again later.');
-        // Fallback to sample data
-        setResources([
-          { id: 1, name: 'HTML & CSS Crash Course', category: 'Frontend', level: 'Beginner' },
-          { id: 2, name: 'JavaScript Fundamentals', category: 'Frontend', level: 'Beginner' },
-        ]);
+        // Use empty array instead of hardcoded data
+        setResources([]);
       } finally {
         setLoading(false);
       }

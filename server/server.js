@@ -1,6 +1,6 @@
 const express = require('express');
-const dotenv = require('dotenv');
 const cors = require('cors');
+const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -42,7 +42,8 @@ app.use('/api/resources', placeholderRouter);
 app.use('/api/auth', placeholderRouter);
 
 // Error handler middleware
-app.use(errorHandler);
+// Commented out until errorHandler is properly implemented
+// app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 

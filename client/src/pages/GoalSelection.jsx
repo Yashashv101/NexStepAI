@@ -1,60 +1,71 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getGoals } from '../services/api';
 
 const GoalSelection = () => {
   const [selectedGoal, setSelectedGoal] = useState('');
+  const [goals, setGoals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   
-  const careerGoals = [
-    {
-      id: 'web-dev',
-      title: 'Web Developer',
-      icon: '🌐',
-      description: 'Build websites and web applications'
-    },
-    {
-      id: 'data-science',
-      title: 'Data Scientist',
-      icon: '📊',
-      description: 'Analyze and interpret complex data'
-    },
-    {
-      id: 'mobile-dev',
-      title: 'Mobile Developer',
-      icon: '📱',
-      description: 'Create apps for iOS and Android'
-    },
-    {
-      id: 'devops',
-      title: 'DevOps Engineer',
-      icon: '⚙️',
-      description: 'Streamline development and operations'
-    },
-    {
-      id: 'ml-engineer',
-      title: 'ML Engineer',
-      icon: '🤖',
-      description: 'Build machine learning systems'
-    },
-    {
-      id: 'cybersecurity',
-      title: 'Cybersecurity Analyst',
-      icon: '🔒',
-      description: 'Protect systems from threats'
-    },
-    {
-      id: 'ui-ux',
-      title: 'UI/UX Designer',
-      icon: '🎨',
-      description: 'Design user interfaces and experiences'
-    },
-    {
-      id: 'cloud-architect',
-      title: 'Cloud Architect',
-      icon: '☁️',
-      description: 'Design cloud infrastructure solutions'
-    }
-  ];
+  // Default icons to use when API goals don't have icons
+  const defaultIcons = {
+    'Web Developer': '🌐',
+    'Data Scientist': '📊',
+    'Mobile Developer': '📱',
+    'DevOps Engineer': '⚙️',
+    'ML Engineer': '🤖',
+    'Cybersecurity Analyst': '🔒',
+    'UI/UX Designer': '🎨',
+    'Cloud Architect': '☁️',
+    'default': '📚'
+  };
+
+  useEffect(() => {
+    const fetchGoals = async () => {
+      try {
+        setLoading(true);
+        const response = await getGoals();
+        
+        if (response.success && response.data) {
+          // Transform API data to match the component's expected format
+          const formattedGoals = response.data.map(goal => ({
+            id: goal._id,
+            title: goal.name,
+            description: goal.description,
+            icon: defaultIcons[goal.name] || defaultIcons.default
+          }));
+          setGoals(formattedGoals);
+        } else {
+          setError('Failed to fetch goals');
+        }
+      } catch (err) {
+        console.error('Error fetching goals:', err);
+        setError('Failed to load career goals. Please try again later.');
+        
+        // Fallback to sample data if API fails
+        setGoals([
+          {
+            id: 'sample-web-dev',
+            title: 'Web Developer',
+            icon: '🌐',
+            description: 'Build websites and web applications'
+          },
+          {
+            id: 'sample-data-science',
+            title: 'Data Scientist',
+            icon: '📊',
+            description: 'Analyze and interpret complex data'
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGoals();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -64,6 +75,17 @@ const GoalSelection = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8 flex justify-center items-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
+          <p className="mt-4 text-gray-600">Loading career goals...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="text-center mb-10">
@@ -71,23 +93,35 @@ const GoalSelection = () => {
         <p className="text-gray-600 text-lg">Select a career goal to generate your personalized learning roadmap</p>
       </div>
       
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          <p>{error}</p>
+        </div>
+      )}
+      
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {careerGoals.map((goal) => (
-            <div 
-              key={goal.id}
-              className={`p-6 border-2 rounded-xl cursor-pointer transition-all shadow-sm hover:shadow-md ${
-                selectedGoal === goal.id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-300' : 'border-gray-200 hover:border-indigo-300'
-              }`}
-              onClick={() => setSelectedGoal(goal.id)}
-            >
-              <div className="flex flex-col items-center text-center">
-                <span className="text-4xl mb-3">{goal.icon}</span>
-                <h3 className="font-bold text-xl mb-2 text-gray-800">{goal.title}</h3>
-                <p className="text-gray-600 text-sm">{goal.description}</p>
+          {goals.length > 0 ? (
+            goals.map((goal) => (
+              <div 
+                key={goal.id}
+                className={`p-6 border-2 rounded-xl cursor-pointer transition-all shadow-sm hover:shadow-md ${
+                  selectedGoal === goal.id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-300' : 'border-gray-200 hover:border-indigo-300'
+                }`}
+                onClick={() => setSelectedGoal(goal.id)}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <span className="text-4xl mb-3">{goal.icon}</span>
+                  <h3 className="font-bold text-xl mb-2 text-gray-800">{goal.title}</h3>
+                  <p className="text-gray-600 text-sm">{goal.description}</p>
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="col-span-3 text-center py-8">
+              <p className="text-gray-500">No career goals available. Please check back later.</p>
             </div>
-          ))}
+          )}
         </div>
         
         <div className="flex justify-center mt-8">

@@ -12,24 +12,32 @@ function Dashboard() {
         setLoading(true);
         const response = await getRoadmaps();
         
-        // Transform API data to match component structure
-        const formattedRoadmaps = response.data.map((roadmap, index) => ({
-          id: roadmap._id || index + 1,
-          title: roadmap.steps[0]?.title || 'Untitled Step',
-          estimatedTime: roadmap.steps[0]?.duration || 'Unknown',
-          progress: Math.floor(Math.random() * 100), // Placeholder for actual progress
-          description: `Step ${index + 1} of your learning journey.`
-        }));
-        
-        setRoadmapItems(formattedRoadmaps);
+        if (response.success && response.data) {
+          // Transform API data to match component structure
+          const formattedRoadmaps = response.data.map((roadmap, index) => {
+            // Get the first step or use defaults if no steps
+            const firstStep = roadmap.steps && roadmap.steps.length > 0 
+              ? roadmap.steps[0] 
+              : { title: 'Untitled Step', duration: 'Unknown' };
+              
+            return {
+              id: roadmap._id,
+              title: firstStep.title,
+              estimatedTime: firstStep.duration,
+              progress: Math.floor(Math.random() * 100), // Placeholder for actual progress tracking
+              description: `Step ${index + 1} of your learning journey for ${roadmap.goalId || 'your career'}.`
+            };
+          });
+          
+          setRoadmapItems(formattedRoadmaps);
+        } else {
+          throw new Error('Invalid response format from API');
+        }
       } catch (err) {
         console.error('Failed to fetch roadmaps:', err);
         setError('Failed to load roadmap data. Please try again later.');
-        // Fallback to sample data if API fails
-        setRoadmapItems([
-          { id: 1, title: 'HTML & CSS Fundamentals', estimatedTime: '2 weeks', progress: 80, description: 'Learn the basics of HTML5 and CSS3 to build static web pages.' },
-          { id: 2, title: 'JavaScript Basics', estimatedTime: '3 weeks', progress: 65, description: 'Master JavaScript fundamentals including variables, functions, and DOM manipulation.' },
-        ]);
+        // Fallback to empty array instead of mock data
+        setRoadmapItems([]);
       } finally {
         setLoading(false);
       }
