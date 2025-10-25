@@ -7,12 +7,15 @@ const errorHandler = require('./middleware/errorHandler');
 // Load env vars
 dotenv.config();
 
-// Connect to database
+// Skip database connection for now
 connectDB();
+
+
 
 // Route files
 const roadmapRoutes = require('./routes/roadmapRoutes');
 const goalRoutes = require('./routes/goalRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // Placeholder for routes that will be implemented later
 const placeholderRouter = express.Router();
@@ -39,7 +42,7 @@ app.use('/api/roadmaps', roadmapRoutes);
 app.use('/api/resumes', placeholderRouter);
 app.use('/api/skillgaps', placeholderRouter);
 app.use('/api/resources', placeholderRouter);
-app.use('/api/auth', placeholderRouter);
+app.use('/api/auth', authRoutes);
 
 // Error handler middleware
 // Commented out until errorHandler is properly implemented

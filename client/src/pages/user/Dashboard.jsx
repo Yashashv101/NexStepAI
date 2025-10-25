@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getRoadmaps } from '../services/api';
+import { getRoadmaps } from '../../services/api';
 
 function Dashboard() {
   const [roadmapItems, setRoadmapItems] = useState([]);

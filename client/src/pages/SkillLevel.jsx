@@ -74,7 +74,7 @@ function SkillLevel() {
         <div className="flex justify-between mt-8">
           <button 
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/goal-selection')}
             className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
           >
             Back
