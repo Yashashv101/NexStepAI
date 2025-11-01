@@ -8,7 +8,8 @@ import {
   Eye,
   Calendar,
   Users,
-  TrendingUp
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react';
 import { 
   getGoals, 

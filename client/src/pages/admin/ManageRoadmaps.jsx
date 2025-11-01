@@ -52,12 +52,26 @@ const ManageRoadmaps = () => {
     try {
       setLoading(true);
       setError('');
-      const data = await getRoadmaps();
-      setRoadmaps(data);
-      setFilteredRoadmaps(data);
+      const response = await getRoadmaps();
+      
+      // Ensure we always have an array
+      let roadmapsData = [];
+      if (response && response.success && Array.isArray(response.data)) {
+        roadmapsData = response.data;
+      } else if (response && Array.isArray(response.roadmaps)) {
+        roadmapsData = response.roadmaps;
+      } else if (Array.isArray(response)) {
+        roadmapsData = response;
+      }
+      
+      setRoadmaps(roadmapsData);
+      setFilteredRoadmaps(roadmapsData);
     } catch (error) {
       console.error('Error fetching roadmaps:', error);
       setError('Failed to fetch roadmaps. Please try again.');
+      // Ensure arrays are set even on error
+      setRoadmaps([]);
+      setFilteredRoadmaps([]);
     } finally {
       setLoading(false);
     }
@@ -65,23 +79,49 @@ const ManageRoadmaps = () => {
 
   const fetchGoals = async () => {
     try {
-      const data = await getGoals();
-      setGoals(data);
+      const response = await getGoals();
+      
+      // Ensure we always have an array
+      let goalsData = [];
+      if (response && response.success && Array.isArray(response.data)) {
+        goalsData = response.data;
+      } else if (response && Array.isArray(response.goals)) {
+        goalsData = response.goals;
+      } else if (Array.isArray(response)) {
+        goalsData = response;
+      }
+      
+      setGoals(goalsData);
     } catch (error) {
       console.error('Error fetching goals:', error);
+      // Ensure goals is set to empty array on error
+      setGoals([]);
     }
   };
 
   useEffect(() => {
+    // Ensure roadmaps is an array before filtering
+    if (!Array.isArray(roadmaps)) {
+      setFilteredRoadmaps([]);
+      return;
+    }
+    
     const filtered = roadmaps.filter(roadmap => {
+      // Safety checks for roadmap properties
+      if (!roadmap || typeof roadmap !== 'object') return false;
+      
       const searchLower = searchTerm.toLowerCase();
-      const goalName = goals.find(goal => goal._id === roadmap.goalId)?.name || '';
+      const goalName = Array.isArray(goals) ? 
+        (goals.find(goal => goal._id === roadmap.goalId)?.name || '') : 
+        '';
       
       return (
-        roadmap.title.toLowerCase().includes(searchLower) ||
-        roadmap.description.toLowerCase().includes(searchLower) ||
+        (roadmap.title && roadmap.title.toLowerCase().includes(searchLower)) ||
+        (roadmap.description && roadmap.description.toLowerCase().includes(searchLower)) ||
         goalName.toLowerCase().includes(searchLower) ||
-        (roadmap.tags && roadmap.tags.some(tag => tag.toLowerCase().includes(searchLower)))
+        (roadmap.tags && Array.isArray(roadmap.tags) && roadmap.tags.some(tag => 
+          tag && tag.toLowerCase().includes(searchLower)
+        ))
       );
     });
     setFilteredRoadmaps(filtered);
@@ -287,10 +327,13 @@ const ManageRoadmaps = () => {
 
         {/* Roadmaps Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredRoadmaps.map((roadmap) => {
-            const goalName = goals.find(goal => goal._id === roadmap.goalId)?.name || 'Unknown Goal';
-            return (
-              <div key={roadmap._id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+          {Array.isArray(filteredRoadmaps) && filteredRoadmaps.length > 0 ? (
+            filteredRoadmaps.map((roadmap) => {
+              const goalName = Array.isArray(goals) ? 
+                (goals.find(goal => goal._id === roadmap.goalId)?.name || 'Unknown Goal') : 
+                'Unknown Goal';
+              return (
+                <div key={roadmap._id || roadmap.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{roadmap.title}</h3>
@@ -362,7 +405,7 @@ const ManageRoadmaps = () => {
                       {roadmap.steps.slice(0, 3).map((step, index) => (
                         <div key={index} className="flex items-center text-sm text-gray-600">
                           <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                          {step}
+                          {typeof step === 'string' ? step : step.title || step.name || 'Untitled Step'}
                         </div>
                       ))}
                       {roadmap.steps.length > 3 && (
@@ -387,22 +430,19 @@ const ManageRoadmaps = () => {
                 </div>
               </div>
             );
-          })}
+          })) : (
+            <div className="col-span-full text-center py-12">
+              <Map className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No roadmaps found</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Try adjusting your search criteria or create a new roadmap.
+              </p>
+            </div>
+          )}
         </div>
-
-        {filteredRoadmaps.length === 0 && (
-          <div className="text-center py-12">
-            <Map className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No roadmaps found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Try adjusting your search criteria or create a new roadmap.
-            </p>
-          </div>
-        )}
 
         {/* Create/Edit Roadmap Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 {editingRoadmap ? 'Edit Roadmap' : 'Create New Roadmap'}
@@ -557,7 +597,7 @@ const ManageRoadmaps = () => {
                             type="text"
                             placeholder="Enter learning step"
                             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            value={step}
+                            value={typeof step === 'string' ? step : step.title || step.name || ''}
                             onChange={(e) => updateStep(index, e.target.value)}
                           />
                           <button
@@ -596,7 +636,6 @@ const ManageRoadmaps = () => {
                 </div>
               </form>
             </div>
-          </div>
         )}
       </div>
     </div>
