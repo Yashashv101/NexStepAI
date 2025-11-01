@@ -41,14 +41,23 @@ export const AuthProvider = ({ children }) => {
 
   const login = (userData, token) => {
     try {
-      setUser(userData);
+      // Use the role provided by the server response
+      const userWithRole = {
+        ...userData,
+        role: userData.role || 'user' // Fallback to 'user' if role is not provided
+      };
+      
+      setUser(userWithRole);
       setIsAuthenticated(true);
       
       // Save to localStorage for persistence
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('user', JSON.stringify(userWithRole));
       localStorage.setItem('token', token);
+      
+      console.log('User logged in with role:', userWithRole.role);
     } catch (error) {
       console.error('Error during login:', error);
+      throw new Error('Login failed. Please try again.');
     }
   };
 

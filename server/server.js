@@ -16,6 +16,10 @@ connectDB();
 const roadmapRoutes = require('./routes/roadmapRoutes');
 const goalRoutes = require('./routes/goalRoutes');
 const authRoutes = require('./routes/authRoutes');
+const resourceRoutes = require('./routes/resourceRoutes');
+const progressRoutes = require('./routes/progressRoutes');
+const activityRoutes = require('./routes/activityRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 // Placeholder for routes that will be implemented later
 const placeholderRouter = express.Router();
@@ -39,10 +43,13 @@ app.get('/', (req, res) => {
 // Mount routers
 app.use('/api/goals', goalRoutes);
 app.use('/api/roadmaps', roadmapRoutes);
+app.use('/api/resources', resourceRoutes);
+app.use('/api/progress', progressRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/resumes', placeholderRouter);
 app.use('/api/skillgaps', placeholderRouter);
-app.use('/api/resources', placeholderRouter);
-app.use('/api/auth', authRoutes);
 
 // Error handler middleware
 // Commented out until errorHandler is properly implemented

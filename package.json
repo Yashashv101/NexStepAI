@@ -23,7 +23,8 @@
   "license": "MIT",
   "dependencies": {
     "concurrently": "^8.0.1",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "node-fetch": "^2.7.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"

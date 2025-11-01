@@ -21,7 +21,14 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Please add a password'],
-    minlength: [6, 'Password must be at least 6 characters'],
+    minlength: [8, 'Password must be at least 8 characters'],
+    validate: {
+      validator: function(password) {
+        // Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character
+        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(password);
+      },
+      message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+    },
     select: false
   },
   role: {
@@ -29,11 +36,21 @@ const UserSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'suspended'],
+    default: 'active'
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
+
+// Create indexes for efficient queries
+UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index({ role: 1 });
+UserSchema.index({ createdAt: -1 });
 
 // Encrypt password using bcrypt before saving
 UserSchema.pre('save', async function(next) {

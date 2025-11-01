@@ -61,11 +61,17 @@ function Auth() {
         });
         console.log('Login successful:', response);
         
-        // Update auth context with user data
-        login(response.user || { email: formData.email }, response.token || 'mock-token');
+        // Update auth context with user data (use response.data, not response.user)
+        const userData = response.data || { email: formData.email };
+        login(userData, response.token || 'mock-token');
         
-        // Navigate to intended destination or goal selection
-        navigate(from, { replace: true });
+        // Role-based navigation
+        if (userData.role === 'admin') {
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          // Navigate to intended destination or goal selection for regular users
+          navigate(from, { replace: true });
+        }
       } else {
         // Register user
         const response = await registerUser({
@@ -75,8 +81,9 @@ function Auth() {
         });
         console.log('Registration successful:', response);
         
-        // Update auth context with user data
-        login(response.user || { name: formData.name, email: formData.email }, response.token || 'mock-token');
+        // Update auth context with user data (use response.data, not response.user)
+        const userData = response.data || { name: formData.name, email: formData.email };
+        login(userData, response.token || 'mock-token');
         
         // Navigate to goal selection to start the onboarding flow
         navigate('/goal-selection', { replace: true });
