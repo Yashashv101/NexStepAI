@@ -21,6 +21,7 @@ router.use(auth);
 // User-specific routes (accessible by the user themselves)
 router.route('/dashboard-stats').get(getUserDashboardStats);
 router.route('/notifications').get(getUserNotifications);
+router.route('/roadmaps').post(startUserRoadmap);
 
 // Admin-only routes
 router.use(roleAuth('admin'));
