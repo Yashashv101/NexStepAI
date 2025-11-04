@@ -81,9 +81,18 @@ const GoalSelection = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (selectedGoal) {
-      // Save to context or state management
-      navigate('/skill-level');
+      // Find the complete goal object from the goals array
+      const goal = goals.find(g => g.id === selectedGoal);
+      if (goal) {
+        selectGoal(goal);
+        navigate('/skill-level');
+      }
     }
+  };
+
+  const handleGoalSelect = (goalId) => {
+    selectGoal(null); // Clear any previous selection first
+    // The actual selection will be handled by form submission
   };
 
   if (loading) {
