@@ -240,12 +240,12 @@ function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Active Roadmaps */}
+          {/* My Roadmap */}
           <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Active Roadmaps</h2>
-              <Link 
-                to="/user/roadmaps" 
+              <h2 className="text-xl font-semibold text-gray-900">My Roadmap</h2>
+              <Link
+                to="/user/roadmaps"
                 className="text-blue-600 hover:text-blue-700 flex items-center text-sm"
               >
                 View All <ArrowRight className="h-4 w-4 ml-1" />
