@@ -25,6 +25,7 @@ import RoadmapModal from './components/RoadmapModal';
 import ToastContainer from './components/ToastContainer';
 
 function App() {
+  // Note: ToastContainer will be used inside AppProvider context
   return (
     <AuthProvider>
       <AppProvider>
