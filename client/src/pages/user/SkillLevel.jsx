@@ -127,12 +127,12 @@ function SkillLevel() {
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {skillLevels.map((level) => (
-            <div 
+            <div
               key={level.id}
               className={`p-6 border-2 rounded-xl cursor-pointer transition-all shadow-sm hover:shadow-md ${
                 selectedLevel === level.id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-300' : 'border-gray-200 hover:border-indigo-300'
               }`}
-              onClick={() => setSelectedLevel(level.id)}
+              onClick={() => handleSkillLevelSelect(level.id)}
             >
               <div className="flex flex-col items-center text-center">
                 <span className="text-4xl mb-3">{level.icon}</span>
