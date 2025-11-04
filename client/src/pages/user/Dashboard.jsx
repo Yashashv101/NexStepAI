@@ -277,37 +277,115 @@ function Dashboard() {
                 {roadmapItems.slice(0, 3).map((item) => (
                   <div key={item.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
                     <div className="flex justify-between items-start mb-4">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
                         <p className="text-gray-600 text-sm mt-1">{item.description}</p>
                       </div>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm ml-4">
                         {item.estimatedTime}
                       </span>
                     </div>
-                    
+
+                    {/* Enhanced Progress Bar */}
                     <div className="mb-4">
                       <div className="flex justify-between mb-2">
                         <span className="text-sm font-medium text-gray-700">Progress</span>
-                        <span className="text-sm font-medium text-gray-700">{item.progress}%</span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {item.steps ? `${item.steps.filter(s => s.completed).length} of ${item.steps.length} steps` : `${item.progress}%`}
+                        </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all" 
+                        <div
+                          className="bg-green-600 h-2 rounded-full transition-all"
                           style={{ width: `${item.progress}%` }}
                         ></div>
                       </div>
                     </div>
-                    
+
+                    {/* Expandable Steps Section */}
+                    {item.steps && item.steps.length > 0 && (
+                      <div className="mb-4">
+                        <button
+                          onClick={() => toggleRoadmapExpansion(item.id)}
+                          className="flex items-center text-sm text-indigo-600 hover:text-indigo-700 mb-3"
+                        >
+                          {expandedRoadmaps[item.id] ? (
+                            <ChevronUp className="h-4 w-4 mr-1" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 mr-1" />
+                          )}
+                          {expandedRoadmaps[item.id] ? 'Hide' : 'Show'} Steps
+                        </button>
+
+                        {expandedRoadmaps[item.id] && (
+                          <div className="space-y-2 border-t pt-3">
+                            {item.steps.map((step, index) => (
+                              <div
+                                key={step.id || index}
+                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                              >
+                                <div className="flex items-center flex-1">
+                                  <div className="w-6 h-6 flex items-center justify-center mr-3">
+                                    {step.completed ? (
+                                      <CheckCircle className="h-5 w-5 text-green-600" />
+                                    ) : (
+                                      <Circle className="h-5 w-5 text-gray-400" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className={`text-sm font-medium ${step.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                                      Step {index + 1}: {step.title}
+                                    </p>
+                                    <p className="text-xs text-gray-500">{step.duration}</p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handleStepCompletion(item.id, step.id, !step.completed)}
+                                  disabled={stepUpdating[step.id]}
+                                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                                    step.completed
+                                      ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                      : 'bg-green-600 text-white hover:bg-green-700'
+                                  } ${stepUpdating[step.id] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                  {stepUpdating[step.id] ? (
+                                    <div className="w-4 h-4 border-t-2 border-b-2 border-current rounded-full animate-spin"></div>
+                                  ) : step.completed ? (
+                                    'Undo'
+                                  ) : (
+                                    'Completed'
+                                  )}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex justify-between items-center">
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar className="h-4 w-4 mr-1" />
                         {formatLastUpdated(item.lastUpdated || item.updatedAt)}
                       </div>
-                      <button className="flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
-                        <Play className="h-4 w-4 mr-2" />
-                        Continue
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => toggleRoadmapExpansion(item.id)}
+                          className="flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                        >
+                          {expandedRoadmaps[item.id] ? (
+                            <>
+                              <ChevronUp className="h-4 w-4 mr-2" />
+                              Hide Details
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-4 w-4 mr-2" />
+                              View Details
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
