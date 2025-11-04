@@ -36,6 +36,9 @@ const GoalSelection = () => {
             id: goal._id,
             title: goal.name,
             description: goal.description,
+            difficulty: goal.difficulty,
+            category: goal.category,
+            estimatedTime: goal.estimatedTime,
             icon: defaultIcons[goal.name] || defaultIcons.default
           }));
           setGoals(formattedGoals);
