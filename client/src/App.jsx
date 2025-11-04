@@ -9,7 +9,6 @@ import RoleBasedNavbar from './components/RoleBasedNavbar';
 import Auth from './pages/Auth';
 import GoalSelection from './pages/GoalSelection';
 import SkillLevel from './pages/user/SkillLevel';
-import TimeSelection from './pages/user/TimeSelection';
 
 // User pages
 import Dashboard from './pages/user/Dashboard';
