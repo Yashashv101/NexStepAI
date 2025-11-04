@@ -401,6 +401,156 @@ exports.updateStepCompletion = async (req, res) => {
   }
 };
 
+// @desc    Start new roadmap for user
+// @route   POST /api/user/roadmaps
+// @access  Private
+exports.startUserRoadmap = async (req, res) => {
+  try {
+    const { goalId, skillLevel } = req.body;
+
+    // Validate required fields
+    if (!goalId || !skillLevel) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide goalId and skillLevel'
+      });
+    }
+
+    // Validate skill level
+    if (!['beginner', 'intermediate', 'advanced'].includes(skillLevel)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid skill level. Must be: beginner, intermediate, or advanced'
+      });
+    }
+
+    // Verify goal exists
+    const goal = await Goal.findById(goalId);
+    if (!goal) {
+      return res.status(404).json({
+        success: false,
+        message: 'Goal not found'
+      });
+    }
+
+    // Check if user already has an active roadmap for this goal
+    const existingProgress = await UserProgress.findOne({
+      userId: req.user.id,
+      goalId: goalId,
+      status: { $in: ['not_started', 'in_progress'] }
+    });
+
+    if (existingProgress) {
+      return res.status(400).json({
+        success: false,
+        message: 'You already have an active roadmap for this goal'
+      });
+    }
+
+    // Find or create a roadmap for this goal
+    let roadmap = await Roadmap.findOne({
+      goalId: goalId,
+      difficulty: skillLevel,
+      isTemplate: true
+    });
+
+    // If no template exists, create a basic one
+    if (!roadmap) {
+      roadmap = await Roadmap.create({
+        title: `${goal.name} Learning Path - ${skillLevel}`,
+        description: `Personalized learning roadmap for ${goal.name} at ${skillLevel} level`,
+        goalId: goalId,
+        userId: req.user.id,
+        difficulty: skillLevel,
+        estimatedDuration: goal.estimatedTime,
+        category: goal.category,
+        steps: [
+          {
+            title: 'Getting Started',
+            description: 'Introduction to fundamental concepts',
+            duration: '2 weeks',
+            order: 1
+          },
+          {
+            title: 'Core Skills Development',
+            description: 'Build essential skills and knowledge',
+            duration: '4 weeks',
+            order: 2
+          },
+          {
+            title: 'Advanced Topics',
+            description: 'Explore advanced concepts and techniques',
+            duration: '3 weeks',
+            order: 3
+          },
+          {
+            title: 'Practical Application',
+            description: 'Apply your knowledge through projects',
+            duration: '2 weeks',
+            order: 4
+          }
+        ],
+        tags: goal.tags || [],
+        skillsRequired: goal.skillsRequired || [],
+        skillsLearned: goal.skillsLearned || [],
+        isPublic: false,
+        isTemplate: false
+      });
+    }
+
+    // Create user progress entry
+    const userProgress = await UserProgress.create({
+      userId: req.user.id,
+      roadmapId: roadmap._id,
+      goalId: goalId,
+      stepProgress: roadmap.steps.map(step => ({
+        stepId: step._id,
+        completed: false,
+        timeSpent: 0,
+        notes: '',
+        completedAt: null
+      })),
+      overallProgress: 0,
+      totalTimeSpent: 0,
+      status: 'not_started',
+      startedAt: new Date()
+    });
+
+    // Create activity log
+    await Activity.createActivity({
+      userId: req.user.id,
+      type: 'roadmap_started',
+      title: `Started learning: ${goal.name}`,
+      description: `Begin ${skillLevel} level roadmap for ${goal.name}`,
+      metadata: {
+        roadmapId: roadmap._id,
+        goalId: goalId,
+        skillLevel: skillLevel
+      },
+      icon: 'play',
+      color: 'blue'
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Roadmap started successfully',
+      data: {
+        roadmapId: roadmap._id,
+        steps: roadmap.steps,
+        progress: userProgress.overallProgress,
+        userProgress: userProgress
+      }
+    });
+  } catch (error) {
+    console.error('Error starting user roadmap:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Get user's roadmaps
 // @route   GET /api/roadmaps/user/:userId
 // @access  Private
