@@ -26,10 +26,11 @@ import Analytics from './pages/admin/Analytics';
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <RoleBasedNavbar />
-          <Routes>
+      <AppProvider>
+        <Router>
+          <div className="min-h-screen bg-gray-50">
+            <RoleBasedNavbar />
+            <Routes>
             {/* Public routes */}
             <Route path="/auth" element={<Auth />} />
             
