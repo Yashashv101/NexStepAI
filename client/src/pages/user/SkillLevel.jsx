@@ -37,11 +37,47 @@ function SkillLevel() {
     }
   ];
 
+  // Skill level validation logic
+  const validateSkillLevel = (userLevel, goalDifficulty) => {
+    const levelMap = { beginner: 1, intermediate: 2, advanced: 3 };
+    const userLevelNum = levelMap[userLevel];
+    const goalLevelNum = levelMap[goalDifficulty];
+
+    if (userLevelNum >= goalLevelNum) {
+      setSkillValidation(
+        'Your skill level meets the requirements for this goal',
+        'success'
+      );
+    } else {
+      setSkillValidation(
+        'Your current skill level is below the recommended level for this goal. Proceeding may require additional effort.',
+        'warning'
+      );
+    }
+  };
+
+  // Handle skill level selection with validation
+  const handleSkillLevelSelect = (level) => {
+    setSelectedLevel(level);
+    if (selectedGoal) {
+      validateSkillLevel(level, selectedGoal.difficulty);
+    }
+  };
+
+  // Clear validation when component unmounts or goal changes
+  useEffect(() => {
+    if (!selectedGoal) {
+      navigate('/goal-selection');
+      return;
+    }
+    clearSkillValidation();
+  }, [selectedGoal, navigate, clearSkillValidation]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (selectedLevel) {
-      // Save to context or state management
-      navigate('/time-selection');
+      selectSkillLevel(selectedLevel);
+      openRoadmapModal();
     }
   };
 
