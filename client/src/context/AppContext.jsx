@@ -226,6 +226,9 @@ export const AppProvider = ({ children }) => {
     }
   }, [state.selectedSkillLevel]);
 
+  // Generate unique ID for toasts
+  const generateToastId = () => `toast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
   // Action creators
   const actions = {
     setUser: (user) => {
