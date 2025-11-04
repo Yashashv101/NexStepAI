@@ -20,6 +20,8 @@ import { useAppContext } from '../../context/AppContext';
 
 function Dashboard() {
   const [roadmapItems, setRoadmapItems] = useState([]);
+  const [expandedRoadmaps, setExpandedRoadmaps] = useState({});
+  const [stepUpdating, setStepUpdating] = useState({});
   const [dashboardStats, setDashboardStats] = useState({
     totalRoadmaps: 0,
     completedRoadmaps: 0,
