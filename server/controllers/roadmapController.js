@@ -504,7 +504,7 @@ exports.startUserRoadmap = async (req, res) => {
       roadmapId: roadmap._id,
       goalId: goalId,
       stepProgress: roadmap.steps.map(step => ({
-        stepId: step._id,
+        stepId: step._id || step.order.toString(),
         completed: false,
         timeSpent: 0,
         notes: '',
