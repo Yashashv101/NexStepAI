@@ -439,22 +439,22 @@ function Dashboard() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <Link 
-                  to="/goal-selection" 
+                <Link
+                  to="/goal-selection"
                   className="flex items-center w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <Target className="h-5 w-5 text-gray-600 mr-3" />
-                  <span className="text-sm font-medium text-gray-900">Set New Goal</span>
+                  <span className="text-sm font-medium text-gray-900">Select New Goal</span>
                 </Link>
-                <Link 
-                  to="/user/roadmaps" 
+                <Link
+                  to="/user/roadmaps"
                   className="flex items-center w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <BookOpen className="h-5 w-5 text-gray-600 mr-3" />
-                  <span className="text-sm font-medium text-gray-900">Browse Roadmaps</span>
+                  <span className="text-sm font-medium text-gray-900">View All Roadmaps</span>
                 </Link>
-                <Link 
-                  to="/user/profile" 
+                <Link
+                  to="/user/profile"
                   className="flex items-center w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <User className="h-5 w-5 text-gray-600 mr-3" />
