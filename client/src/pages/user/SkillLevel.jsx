@@ -86,7 +86,43 @@ function SkillLevel() {
       <div className="text-center mb-10">
         <h1 className="text-4xl font-bold text-indigo-700 mb-3">What's Your Skill Level?</h1>
         <p className="text-gray-600 text-lg">Help us tailor your learning roadmap to your experience</p>
+
+        {selectedGoal && (
+          <div className="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+            <p className="text-sm text-indigo-700 font-medium">Selected Goal:</p>
+            <p className="text-lg font-semibold text-indigo-900">{selectedGoal.title}</p>
+            <p className="text-sm text-indigo-600">
+              Difficulty: <span className="capitalize">{selectedGoal.difficulty}</span> •
+              Est. Time: {selectedGoal.estimatedTime}
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* Validation Message */}
+      {skillValidationMessage && (
+        <div className={`mb-6 p-4 rounded-lg border flex items-center ${
+          skillValidationType === 'success'
+            ? 'bg-green-100 border-green-300 text-green-800'
+            : 'bg-yellow-100 border-yellow-300 text-yellow-800'
+        }`}>
+          <span className="text-2xl mr-3">
+            {skillValidationType === 'success' ? '✓' : '⚠'}
+          </span>
+          <div>
+            <p className="font-medium">
+              {skillValidationType === 'success' ? 'Great Choice!' : 'Heads Up'}
+            </p>
+            <p className="text-sm">{skillValidationMessage}</p>
+          </div>
+          <button
+            onClick={clearSkillValidation}
+            className="ml-auto text-gray-500 hover:text-gray-700"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
