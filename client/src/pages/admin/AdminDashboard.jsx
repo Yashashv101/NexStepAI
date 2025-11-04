@@ -8,26 +8,39 @@ import {
   TrendingUp, 
   Activity,
   Plus,
-  Eye
+  Eye,
+  Loader
 } from 'lucide-react';
+import { getAdminStats } from '../../services/api';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalGoals: 0,
     totalRoadmaps: 0,
-    activeUsers: 0
+    activeUsers: 0,
+    recentActivities: []
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // TODO: Fetch actual stats from API
-    setStats({
-      totalUsers: 156,
-      totalGoals: 42,
-      totalRoadmaps: 38,
-      activeUsers: 89
-    });
+    fetchAdminStats();
   }, []);
+
+  const fetchAdminStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getAdminStats();
+      setStats(response.data);
+    } catch (err) {
+      console.error('Error fetching admin stats:', err);
+      setError('Failed to load admin statistics. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const StatCard = ({ icon: Icon, title, value, color, link }) => (
     <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
@@ -68,6 +81,47 @@ const AdminDashboard = () => {
       </div>
     </Link>
   );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <Loader className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600">Loading admin dashboard...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <div className="flex items-center">
+              <div className="text-red-600">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error Loading Data</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+                <button 
+                  onClick={fetchAdminStats}
+                  className="mt-2 text-sm text-red-800 underline hover:text-red-900"
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -141,42 +195,54 @@ const AdminDashboard = () => {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between py-3 border-b border-gray-200">
-              <div className="flex items-center">
-                <div className="bg-green-100 p-2 rounded-full mr-3">
-                  <Users className="h-4 w-4 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">New user registered</p>
-                  <p className="text-xs text-gray-500">john.doe@example.com</p>
-                </div>
+            {stats.recentActivities && stats.recentActivities.length > 0 ? (
+              stats.recentActivities.map((activity, index) => {
+                const getActivityIcon = (type) => {
+                  switch (type) {
+                    case 'user_registered':
+                      return { icon: Users, color: 'bg-green-100', iconColor: 'text-green-600' };
+                    case 'goal_completed':
+                      return { icon: Target, color: 'bg-blue-100', iconColor: 'text-blue-600' };
+                    case 'roadmap_created':
+                      return { icon: Map, color: 'bg-purple-100', iconColor: 'text-purple-600' };
+                    case 'step_completed':
+                      return { icon: Activity, color: 'bg-orange-100', iconColor: 'text-orange-600' };
+                    default:
+                      return { icon: Activity, color: 'bg-gray-100', iconColor: 'text-gray-600' };
+                  }
+                };
+
+                const { icon: Icon, color, iconColor } = getActivityIcon(activity.type);
+                const isLast = index === stats.recentActivities.length - 1;
+
+                return (
+                  <div key={activity._id} className={`flex items-center justify-between py-3 ${!isLast ? 'border-b border-gray-200' : ''}`}>
+                    <div className="flex items-center">
+                      <div className={`${color} p-2 rounded-full mr-3`}>
+                        <Icon className={`h-4 w-4 ${iconColor}`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                        <p className="text-xs text-gray-500">{activity.description}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {new Date(activity.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center text-gray-500 py-8">
+                <Activity className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p>No recent activity to display</p>
               </div>
-              <span className="text-xs text-gray-500">2 hours ago</span>
-            </div>
-            <div className="flex items-center justify-between py-3 border-b border-gray-200">
-              <div className="flex items-center">
-                <div className="bg-blue-100 p-2 rounded-full mr-3">
-                  <Target className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Goal completed</p>
-                  <p className="text-xs text-gray-500">Full Stack Developer path</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">5 hours ago</span>
-            </div>
-            <div className="flex items-center justify-between py-3">
-              <div className="flex items-center">
-                <div className="bg-purple-100 p-2 rounded-full mr-3">
-                  <Map className="h-4 w-4 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">New roadmap created</p>
-                  <p className="text-xs text-gray-500">React Developer Roadmap</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">1 day ago</span>
-            </div>
+            )}
           </div>
         </div>
       </div>

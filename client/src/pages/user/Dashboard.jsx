@@ -11,23 +11,40 @@ import {
   Play,
   User
 } from 'lucide-react';
-import { getRoadmaps } from '../../services/api';
+import { getRoadmaps, getUserDashboardStats, getUserActivities } from '../../services/api';
 
 function Dashboard() {
   const [roadmapItems, setRoadmapItems] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState({
+    totalRoadmaps: 0,
+    completedRoadmaps: 0,
+    inProgressRoadmaps: 0,
+    totalTimeSpent: 0,
+    averageProgress: 0,
+    weeklyTimeSpent: 0,
+    weeklyTopicsCompleted: 0,
+    currentStreak: 0,
+    weeklyGoalProgress: 0
+  });
+  const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchRoadmaps = async () => {
+    const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const response = await getRoadmaps();
         
-        if (response.success && response.data) {
-          // Transform API data to match component structure
-          const formattedRoadmaps = response.data.map((roadmap, index) => {
-            // Get the first step or use defaults if no steps
+        // Fetch all dashboard data in parallel
+        const [roadmapsResponse, statsResponse, activitiesResponse] = await Promise.all([
+          getRoadmaps(),
+          getUserDashboardStats(),
+          getUserActivities({ limit: 5 })
+        ]);
+        
+        // Handle roadmaps data
+        if (roadmapsResponse.success && roadmapsResponse.data) {
+          const formattedRoadmaps = roadmapsResponse.data.map((roadmap, index) => {
             const firstStep = roadmap.steps && roadmap.steps.length > 0 
               ? roadmap.steps[0] 
               : { title: 'Untitled Step', duration: 'Unknown' };
@@ -36,30 +53,62 @@ function Dashboard() {
               id: roadmap._id,
               title: firstStep.title,
               estimatedTime: firstStep.duration,
-              progress: Math.floor(Math.random() * 100), // Placeholder for actual progress tracking
+              progress: roadmap.progress || 0, // Use actual progress or 0 if not available
               description: `Step ${index + 1} of your learning journey for ${roadmap.goalId || 'your career'}.`
             };
           });
           
           setRoadmapItems(formattedRoadmaps);
-        } else {
-          throw new Error('Invalid response format from API');
         }
+        
+        // Handle dashboard stats
+        if (statsResponse.success && statsResponse.data) {
+          setDashboardStats(statsResponse.data);
+        }
+        
+        // Handle recent activities
+        if (activitiesResponse.success && activitiesResponse.data) {
+          setRecentActivities(activitiesResponse.data);
+        }
+        
       } catch (err) {
-        console.error('Failed to fetch roadmaps:', err);
-        setError('Failed to load roadmap data. Please try again later.');
-        // Fallback to empty array instead of mock data
+        console.error('Failed to fetch dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again later.');
+        // Set empty arrays/objects instead of mock data
         setRoadmapItems([]);
+        setRecentActivities([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRoadmaps();
+    fetchDashboardData();
   }, []);
 
-  // Calculate overall progress
-  const totalProgress = roadmapItems.reduce((sum, item) => sum + item.progress, 0) / roadmapItems.length;
+  // Calculate overall progress from dashboard stats
+  const overallProgress = dashboardStats.averageProgress || 0;
+
+  // Format time spent for display
+  const formatTimeSpent = (minutes) => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  };
+
+  // Helper function to format last updated time
+  const formatLastUpdated = (dateString) => {
+    if (!dateString) return 'Never updated';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) return '1 day ago';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
+    return `${Math.ceil(diffDays / 30)} months ago`;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -89,7 +138,7 @@ function Dashboard() {
                 <TrendingUp className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">{Math.round(totalProgress || 0)}%</p>
+                <p className="text-2xl font-bold text-gray-900">{Math.round(overallProgress)}%</p>
                 <p className="text-sm text-gray-600">Overall Progress</p>
               </div>
             </div>
@@ -101,7 +150,7 @@ function Dashboard() {
                 <Target className="h-6 w-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">{roadmapItems.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{dashboardStats.inProgressRoadmaps}</p>
                 <p className="text-sm text-gray-600">Active Roadmaps</p>
               </div>
             </div>
@@ -113,7 +162,9 @@ function Dashboard() {
                 <Clock className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">8.5h</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatTimeSpent(dashboardStats.weeklyTimeSpent || 0)}
+                </p>
                 <p className="text-sm text-gray-600">This Week</p>
               </div>
             </div>
@@ -125,7 +176,7 @@ function Dashboard() {
                 <Award className="h-6 w-6 text-orange-600" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">12</p>
+                <p className="text-2xl font-bold text-gray-900">{dashboardStats.currentStreak || 0}</p>
                 <p className="text-sm text-gray-600">Day Streak</p>
               </div>
             </div>
@@ -195,7 +246,7 @@ function Dashboard() {
                     <div className="flex justify-between items-center">
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar className="h-4 w-4 mr-1" />
-                        Last updated 2 days ago
+                        {formatLastUpdated(item.lastUpdated || item.updatedAt)}
                       </div>
                       <button className="flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
                         <Play className="h-4 w-4 mr-2" />
@@ -214,33 +265,39 @@ function Dashboard() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
               <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="p-2 bg-green-100 rounded-lg mr-3">
-                    <Award className="h-4 w-4 text-green-600" />
+                {recentActivities.length > 0 ? (
+                  recentActivities.map((activity, index) => (
+                    <div key={activity._id || index} className="flex items-start">
+                      <div className={`p-2 rounded-lg mr-3 ${
+                        activity.color === 'green' ? 'bg-green-100' :
+                        activity.color === 'blue' ? 'bg-blue-100' :
+                        activity.color === 'purple' ? 'bg-purple-100' :
+                        'bg-gray-100'
+                      }`}>
+                        {activity.icon === 'check-circle' ? <Award className="h-4 w-4 text-green-600" /> :
+                         activity.icon === 'book-open' ? <BookOpen className="h-4 w-4 text-blue-600" /> :
+                         activity.icon === 'target' ? <Target className="h-4 w-4 text-purple-600" /> :
+                         <Award className="h-4 w-4 text-gray-600" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(activity.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-gray-500">No recent activity</p>
+                    <p className="text-xs text-gray-400 mt-1">Start learning to see your progress here</p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Completed React Hooks</p>
-                    <p className="text-xs text-gray-500">2 hours ago</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="p-2 bg-blue-100 rounded-lg mr-3">
-                    <BookOpen className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Started JavaScript ES6</p>
-                    <p className="text-xs text-gray-500">1 day ago</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="p-2 bg-purple-100 rounded-lg mr-3">
-                    <Target className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Set new learning goal</p>
-                    <p className="text-xs text-gray-500">3 days ago</p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -278,23 +335,34 @@ function Dashboard() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Learning Time</span>
-                  <span className="text-sm font-medium text-gray-900">8.5 hours</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {formatTimeSpent(dashboardStats.weeklyTimeSpent || 0)}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Topics Completed</span>
-                  <span className="text-sm font-medium text-gray-900">3</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {dashboardStats.weeklyTopicsCompleted || 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Current Streak</span>
-                  <span className="text-sm font-medium text-gray-900">12 days</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {dashboardStats.currentStreak || 0} days
+                  </span>
                 </div>
                 <div className="pt-2 border-t border-gray-200">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-gray-600">Weekly Goal</span>
-                    <span className="text-sm font-medium text-gray-900">85%</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {Math.round(dashboardStats.weeklyGoalProgress || 0)}%
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: '85%' }}></div>
+                    <div 
+                      className="bg-green-600 h-2 rounded-full transition-all" 
+                      style={{ width: `${Math.min(dashboardStats.weeklyGoalProgress || 0, 100)}%` }}
+                    ></div>
                   </div>
                 </div>
               </div>

@@ -142,10 +142,10 @@ exports.createRoadmap = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!title || !goalId || !difficulty || !estimatedDuration || !category || !steps || steps.length === 0) {
+    if (!title || !goalId || !difficulty || !estimatedDuration || !category) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields: title, goalId, difficulty, estimatedDuration, category, and steps'
+        message: 'Please provide all required fields: title, goalId, difficulty, estimatedDuration, and category'
       });
     }
 

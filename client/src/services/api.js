@@ -2,6 +2,35 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api';
 
+// Helper function to get user-friendly error messages
+const getErrorMessage = (error) => {
+  if (error.response?.data?.message) {
+    return error.response.data.message;
+  }
+  
+  if (error.response?.status === 400) {
+    return 'Invalid data provided. Please check your inputs and try again.';
+  }
+  
+  if (error.response?.status === 401) {
+    return 'You are not authorized to perform this action. Please log in and try again.';
+  }
+  
+  if (error.response?.status === 403) {
+    return 'You do not have permission to perform this action.';
+  }
+  
+  if (error.response?.status === 404) {
+    return 'The requested resource was not found.';
+  }
+  
+  if (error.response?.status >= 500) {
+    return 'A server error occurred. Please try again later.';
+  }
+  
+  return 'An unexpected error occurred. Please try again.';
+};
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
@@ -117,6 +146,78 @@ export const updateCurrentUser = async (userData) => {
   }
 };
 
+// User Dashboard Data
+export const getUserDashboardStats = async () => {
+  try {
+    const response = await api.get('/users/dashboard-stats');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user dashboard stats:', error);
+    throw error;
+  }
+};
+
+export const getUserNotifications = async () => {
+  try {
+    const response = await api.get('/users/notifications');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user notifications:', error);
+    throw error;
+  }
+};
+
+export const getUserActivities = async (params = {}) => {
+  try {
+    const response = await api.get('/activities', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user activities:', error);
+    throw error;
+  }
+};
+
+export const getUserRoadmaps = async () => {
+  try {
+    const response = await api.get('/roadmaps/user');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user roadmaps:', error);
+    throw error;
+  }
+};
+
+export const getUserProgress = async (roadmapId) => {
+  try {
+    const response = await api.get(`/progress/${roadmapId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user progress:', error);
+    throw error;
+  }
+};
+
+// Progress API calls
+export const updateStepProgress = async (roadmapId, stepId, progressData) => {
+  try {
+    const response = await api.put(`/progress/${roadmapId}/step/${stepId}`, progressData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating step progress:', error);
+    throw error;
+  }
+};
+
+export const resetProgress = async (roadmapId) => {
+  try {
+    const response = await api.delete(`/progress/${roadmapId}/reset`);
+    return response.data;
+  } catch (error) {
+    console.error('Error resetting progress:', error);
+    throw error;
+  }
+};
+
 // Goal API calls
 export const getGoals = async (params = {}) => {
   try {
@@ -140,11 +241,39 @@ export const getGoal = async (id) => {
 
 export const createGoal = async (goalData) => {
   try {
+    // Log the goal creation attempt
+    console.log('Attempting to create goal:', {
+      name: goalData.name,
+      category: goalData.category,
+      difficulty: goalData.difficulty,
+      timestamp: new Date().toISOString()
+    });
+    
     const response = await api.post('/goals', goalData);
+    console.log('Goal created successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error creating goal:', error);
-    throw error;
+    // Enhanced error logging
+    const errorDetails = {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.error('Error creating goal:', errorDetails);
+    
+    // Provide more specific error messages based on error type
+    if (error.response?.data?.validationDetails) {
+      console.error('Validation error details:', error.response.data.validationDetails);
+    }
+    
+    throw {
+      ...error,
+      friendlyMessage: getErrorMessage(error),
+      errorDetails
+    };
   }
 };
 
@@ -276,6 +405,29 @@ export const deleteResource = async (id) => {
     return response.data;
   } catch (error) {
     console.error('Error deleting resource:', error);
+    throw error;
+  }
+};
+
+// Analytics API calls
+export const getAnalyticsDashboard = async (timeRange = '30d') => {
+  try {
+    const response = await api.get('/analytics/dashboard', { 
+      params: { timeRange } 
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching analytics dashboard:', error);
+    throw error;
+  }
+};
+
+export const getAdminStats = async () => {
+  try {
+    const response = await api.get('/analytics/admin-stats');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
     throw error;
   }
 };

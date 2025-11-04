@@ -1,5 +1,8 @@
 const User = require('../models/User');
 const Activity = require('../models/Activity');
+const UserProgress = require('../models/UserProgress');
+const Goal = require('../models/Goal');
+const Roadmap = require('../models/Roadmap');
 
 // @desc    Get all users (Admin only)
 // @route   GET /api/users
@@ -51,6 +54,231 @@ exports.getUsers = async (req, res) => {
       message: 'Server Error',
       error: error.message
     });
+  }
+};
+
+// @desc    Get user dashboard stats
+// @route   GET /api/users/dashboard-stats
+// @access  Private
+exports.getUserDashboardStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Get user progress statistics
+    const progressStats = await UserProgress.aggregate([
+      { $match: { userId: userId } },
+      {
+        $group: {
+          _id: null,
+          totalRoadmaps: { $sum: 1 },
+          completedRoadmaps: {
+            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
+          },
+          inProgressRoadmaps: {
+            $sum: { $cond: [{ $eq: ['$status', 'in_progress'] }, 1, 0] }
+          },
+          totalTimeSpent: { $sum: '$totalTimeSpent' },
+          averageProgress: { $avg: '$overallProgress' }
+        }
+      }
+    ]);
+
+    const stats = progressStats[0] || {
+      totalRoadmaps: 0,
+      completedRoadmaps: 0,
+      inProgressRoadmaps: 0,
+      totalTimeSpent: 0,
+      averageProgress: 0
+    };
+
+    // Get recent activities (last 5)
+    const recentActivities = await Activity.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('type title description createdAt icon color');
+
+    // Get current week's learning time
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+
+    const weeklyProgress = await UserProgress.aggregate([
+      { $match: { userId: userId, lastActivityAt: { $gte: weekStart } } },
+      {
+        $group: {
+          _id: null,
+          weeklyTimeSpent: { $sum: '$totalTimeSpent' },
+          stepsCompleted: {
+            $sum: {
+              $size: {
+                $filter: {
+                  input: '$stepProgress',
+                  cond: { 
+                    $and: [
+                      { $eq: ['$$this.completed', true] },
+                      { $gte: ['$$this.completedAt', weekStart] }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    const weeklyStats = weeklyProgress[0] || {
+      weeklyTimeSpent: 0,
+      stepsCompleted: 0
+    };
+
+    // Get learning streak
+    const learningStreak = await calculateLearningStreak(userId);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        ...stats,
+        ...weeklyStats,
+        learningStreak,
+        recentActivities
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user dashboard stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get user notifications
+// @route   GET /api/users/notifications
+// @access  Private
+exports.getUserNotifications = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { page = 1, limit = 10, unreadOnly = false } = req.query;
+
+    // For now, we'll generate notifications based on user progress and activities
+    // In a real app, you'd have a separate Notification model
+    const notifications = [];
+
+    // Check for incomplete roadmaps that haven't been updated in a while
+    const staleRoadmaps = await UserProgress.find({
+      userId,
+      status: 'in_progress',
+      lastActivityAt: { $lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // 7 days ago
+    }).populate('roadmapId', 'title');
+
+    staleRoadmaps.forEach(progress => {
+      notifications.push({
+        id: `stale_${progress._id}`,
+        type: 'reminder',
+        title: 'Continue Your Learning',
+        message: `You haven't made progress on "${progress.roadmapId.title}" in a while. Keep going!`,
+        createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+        read: false,
+        icon: 'clock',
+        color: 'yellow'
+      });
+    });
+
+    // Check for completed milestones
+    const recentCompletions = await Activity.find({
+      userId,
+      type: 'step_completed',
+      createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
+    }).limit(3);
+
+    recentCompletions.forEach(activity => {
+      notifications.push({
+        id: `completion_${activity._id}`,
+        type: 'achievement',
+        title: 'Great Progress!',
+        message: activity.title,
+        createdAt: activity.createdAt,
+        read: false,
+        icon: 'check-circle',
+        color: 'green'
+      });
+    });
+
+    // Sort by creation date
+    notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // Apply pagination
+    const startIndex = (page - 1) * limit;
+    const paginatedNotifications = notifications.slice(startIndex, startIndex + limit);
+
+    res.status(200).json({
+      success: true,
+      count: paginatedNotifications.length,
+      total: notifications.length,
+      page: parseInt(page),
+      pages: Math.ceil(notifications.length / limit),
+      data: paginatedNotifications
+    });
+  } catch (error) {
+    console.error('Error fetching user notifications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+      error: error.message
+    });
+  }
+};
+
+// Helper function to calculate learning streak
+const calculateLearningStreak = async (userId) => {
+  try {
+    const activities = await Activity.find({
+      userId,
+      type: { $in: ['step_completed', 'roadmap_started'] }
+    }).sort({ createdAt: -1 });
+
+    if (activities.length === 0) return 0;
+
+    let streak = 0;
+    let currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+
+    // Check if user has activity today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const hasActivityToday = activities.some(activity => {
+      const activityDate = new Date(activity.createdAt);
+      activityDate.setHours(0, 0, 0, 0);
+      return activityDate.getTime() === today.getTime();
+    });
+
+    if (!hasActivityToday) {
+      // If no activity today, start checking from yesterday
+      currentDate.setDate(currentDate.getDate() - 1);
+    }
+
+    // Count consecutive days with activity
+    for (let i = 0; i < 365; i++) { // Max 365 days
+      const hasActivity = activities.some(activity => {
+        const activityDate = new Date(activity.createdAt);
+        activityDate.setHours(0, 0, 0, 0);
+        return activityDate.getTime() === currentDate.getTime();
+      });
+
+      if (hasActivity) {
+        streak++;
+        currentDate.setDate(currentDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  } catch (error) {
+    console.error('Error calculating learning streak:', error);
+    return 0;
   }
 };
 

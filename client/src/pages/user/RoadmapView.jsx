@@ -10,14 +10,19 @@ import {
   RotateCcw,
   Calendar,
   TrendingUp,
-  BookOpen
+  BookOpen,
+  AlertCircle
 } from 'lucide-react';
+import { getUserRoadmaps, getUserProgress, updateStepProgress, resetProgress } from '../../services/api';
+import cacheService from '../../services/cacheService';
 
 const RoadmapView = () => {
   const [roadmaps, setRoadmaps] = useState([]);
   const [selectedRoadmap, setSelectedRoadmap] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [userProgress, setUserProgress] = useState({});
+  const [updatingStep, setUpdatingStep] = useState(null);
 
   useEffect(() => {
     fetchUserRoadmaps();
@@ -25,52 +30,95 @@ const RoadmapView = () => {
 
   const fetchUserRoadmaps = async () => {
     try {
-      // TODO: Replace with actual API call to get user's roadmaps
-      const mockRoadmaps = [
-        {
-          id: 1,
-          title: 'React Developer Roadmap',
-          description: 'Complete guide to becoming a React developer',
-          goalName: 'Full Stack Developer',
-          difficulty: 'intermediate',
-          estimatedDuration: '4-6 months',
-          steps: [
-            { id: 1, title: 'Learn JavaScript fundamentals', completed: true, timeSpent: 20 },
-            { id: 2, title: 'Understand React basics', completed: true, timeSpent: 15 },
-            { id: 3, title: 'Master React hooks', completed: false, timeSpent: 8 },
-            { id: 4, title: 'Learn state management (Redux/Context)', completed: false, timeSpent: 0 },
-            { id: 5, title: 'Build real-world projects', completed: false, timeSpent: 0 }
-          ],
-          startedAt: '2024-01-10',
-          status: 'in_progress'
-        },
-        {
-          id: 2,
-          title: 'Mobile App Development',
-          description: 'Learn to build mobile apps with React Native',
-          goalName: 'Mobile App Developer',
-          difficulty: 'intermediate',
-          estimatedDuration: '6-8 months',
-          steps: [
-            { id: 1, title: 'JavaScript fundamentals', completed: true, timeSpent: 25 },
-            { id: 2, title: 'React basics', completed: false, timeSpent: 5 },
-            { id: 3, title: 'React Native setup', completed: false, timeSpent: 0 },
-            { id: 4, title: 'Navigation and state management', completed: false, timeSpent: 0 },
-            { id: 5, title: 'Publishing apps to stores', completed: false, timeSpent: 0 }
-          ],
-          startedAt: '2024-01-15',
-          status: 'in_progress'
-        }
-      ];
+      setLoading(true);
+      setError(null);
+
+      // Try to get cached data first
+      const cacheKey = 'user-roadmaps';
+      const cachedData = cacheService.get(cacheKey);
       
-      setRoadmaps(mockRoadmaps);
-      if (mockRoadmaps.length > 0) {
-        setSelectedRoadmap(mockRoadmaps[0]);
+      if (cachedData) {
+        setRoadmaps(cachedData);
+        if (cachedData.length > 0) {
+          setSelectedRoadmap(cachedData[0]);
+          await fetchProgressForRoadmap(cachedData[0]._id);
+        }
+        setLoading(false);
       }
-      setLoading(false);
+
+      // Fetch fresh data
+      const response = await getUserRoadmaps();
+      if (response.success) {
+        const roadmapsWithProgress = await Promise.all(
+          response.data.map(async (roadmap) => {
+            try {
+              const progressResponse = await getUserProgress(roadmap._id);
+              const progress = progressResponse.success ? progressResponse.data : null;
+              
+              return {
+                ...roadmap,
+                progress: progress,
+                steps: roadmap.steps.map(step => {
+                  const stepProgress = progress?.stepProgress?.find(sp => sp.stepId === step._id);
+                  return {
+                    ...step,
+                    completed: stepProgress?.completed || false,
+                    timeSpent: stepProgress?.timeSpent || 0,
+                    notes: stepProgress?.notes || '',
+                    completedAt: stepProgress?.completedAt
+                  };
+                })
+              };
+            } catch (err) {
+              console.warn(`Failed to fetch progress for roadmap ${roadmap._id}:`, err);
+              return roadmap;
+            }
+          })
+        );
+
+        setRoadmaps(roadmapsWithProgress);
+        cacheService.set(cacheKey, roadmapsWithProgress, 5 * 60 * 1000); // 5 minutes
+
+        if (roadmapsWithProgress.length > 0 && !selectedRoadmap) {
+          setSelectedRoadmap(roadmapsWithProgress[0]);
+        }
+      } else {
+        throw new Error(response.message || 'Failed to fetch roadmaps');
+      }
     } catch (error) {
       console.error('Error fetching roadmaps:', error);
+      setError(error.message || 'Failed to load roadmaps');
+      
+      // If we have cached data, show it with error message
+      const cacheKey = 'user-roadmaps';
+      const cachedData = cacheService.get(cacheKey);
+      if (cachedData && cachedData.length > 0) {
+        setRoadmaps(cachedData);
+        if (!selectedRoadmap) {
+          setSelectedRoadmap(cachedData[0]);
+        }
+      }
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProgressForRoadmap = async (roadmapId) => {
+    try {
+      const cacheKey = `user-progress-${roadmapId}`;
+      const cachedProgress = cacheService.get(cacheKey);
+      
+      if (cachedProgress) {
+        setUserProgress(prev => ({ ...prev, [roadmapId]: cachedProgress }));
+      }
+
+      const response = await getUserProgress(roadmapId);
+      if (response.success) {
+        setUserProgress(prev => ({ ...prev, [roadmapId]: response.data }));
+        cacheService.set(cacheKey, response.data, 2 * 60 * 1000); // 2 minutes
+      }
+    } catch (error) {
+      console.error('Error fetching progress:', error);
     }
   };
 
@@ -78,9 +126,16 @@ const RoadmapView = () => {
     if (!selectedRoadmap) return;
 
     try {
-      // TODO: Replace with actual API call to update step completion
+      setUpdatingStep(stepId);
+      
+      const step = selectedRoadmap.steps.find(s => s._id === stepId);
+      if (!step) return;
+
+      const newCompletedStatus = !step.completed;
+      
+      // Optimistically update UI
       const updatedSteps = selectedRoadmap.steps.map(step =>
-        step.id === stepId ? { ...step, completed: !step.completed } : step
+        step._id === stepId ? { ...step, completed: newCompletedStatus } : step
       );
 
       const updatedRoadmap = { ...selectedRoadmap, steps: updatedSteps };
@@ -88,10 +143,69 @@ const RoadmapView = () => {
 
       // Update the roadmaps list
       setRoadmaps(roadmaps.map(roadmap =>
-        roadmap.id === selectedRoadmap.id ? updatedRoadmap : roadmap
+        roadmap._id === selectedRoadmap._id ? updatedRoadmap : roadmap
       ));
+
+      // Make API call
+      const response = await updateStepProgress(selectedRoadmap._id, stepId, {
+        completed: newCompletedStatus,
+        timeSpent: step.timeSpent || 0
+      });
+
+      if (response.success) {
+        // Invalidate cache
+        cacheService.delete('user-roadmaps');
+        cacheService.delete(`user-progress-${selectedRoadmap._id}`);
+        
+        // Update progress data
+        setUserProgress(prev => ({ ...prev, [selectedRoadmap._id]: response.data }));
+      } else {
+        throw new Error(response.message || 'Failed to update step');
+      }
     } catch (error) {
       console.error('Error updating step completion:', error);
+      
+      // Revert optimistic update on error
+      const revertedSteps = selectedRoadmap.steps.map(step =>
+        step._id === stepId ? { ...step, completed: !step.completed } : step
+      );
+
+      const revertedRoadmap = { ...selectedRoadmap, steps: revertedSteps };
+      setSelectedRoadmap(revertedRoadmap);
+
+      setRoadmaps(roadmaps.map(roadmap =>
+        roadmap._id === selectedRoadmap._id ? revertedRoadmap : roadmap
+      ));
+      
+      setError('Failed to update step progress. Please try again.');
+    } finally {
+      setUpdatingStep(null);
+    }
+  };
+
+  const handleResetProgress = async () => {
+    if (!selectedRoadmap || !window.confirm('Are you sure you want to reset all progress for this roadmap? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const response = await resetProgress(selectedRoadmap._id);
+      if (response.success) {
+        // Invalidate cache and refresh data
+        cacheService.delete('user-roadmaps');
+        cacheService.delete(`user-progress-${selectedRoadmap._id}`);
+        
+        await fetchUserRoadmaps();
+      } else {
+        throw new Error(response.message || 'Failed to reset progress');
+      }
+    } catch (error) {
+      console.error('Error resetting progress:', error);
+      setError('Failed to reset progress. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -124,6 +238,24 @@ const RoadmapView = () => {
     );
   }
 
+  if (error && roadmaps.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-red-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Error loading roadmaps</h3>
+          <p className="mt-1 text-sm text-gray-500">{error}</p>
+          <button 
+            onClick={fetchUserRoadmaps}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (roadmaps.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -148,6 +280,22 @@ const RoadmapView = () => {
             My Learning Roadmaps
           </h1>
           <p className="text-gray-600 mt-2">Track your progress and continue your learning journey</p>
+          
+          {/* Error Banner */}
+          {error && (
+            <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+                <p className="text-sm text-red-700">{error}</p>
+                <button 
+                  onClick={() => setError(null)}
+                  className="ml-auto text-red-400 hover:text-red-600"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -157,10 +305,10 @@ const RoadmapView = () => {
             <div className="space-y-4">
               {roadmaps.map((roadmap) => (
                 <div
-                  key={roadmap.id}
+                  key={roadmap._id}
                   onClick={() => setSelectedRoadmap(roadmap)}
                   className={`bg-white rounded-lg shadow-md p-4 cursor-pointer transition-all ${
-                    selectedRoadmap?.id === roadmap.id 
+                    selectedRoadmap?._id === roadmap._id 
                       ? 'ring-2 ring-blue-500 border-blue-500' 
                       : 'hover:shadow-lg'
                   }`}
@@ -173,7 +321,7 @@ const RoadmapView = () => {
                   </div>
                   <div className="flex items-center text-xs text-gray-500 mb-2">
                     <Target className="h-3 w-3 mr-1" />
-                    {roadmap.goalName}
+                    {roadmap.goalId?.name || 'No Goal'}
                   </div>
                   <div className="mb-2">
                     <div className="flex justify-between text-xs text-gray-600 mb-1">
@@ -194,7 +342,7 @@ const RoadmapView = () => {
                     </div>
                     <div className="flex items-center">
                       <Calendar className="h-3 w-3 mr-1" />
-                      Started {new Date(roadmap.startedAt).toLocaleDateString()}
+                      Started {new Date(roadmap.createdAt).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
@@ -287,7 +435,7 @@ const RoadmapView = () => {
                   <div className="space-y-3">
                     {selectedRoadmap.steps.map((step, index) => (
                       <div
-                        key={step.id}
+                        key={step._id}
                         className={`flex items-center p-4 rounded-lg border-2 transition-all ${
                           step.completed 
                             ? 'bg-green-50 border-green-200' 
@@ -295,10 +443,13 @@ const RoadmapView = () => {
                         }`}
                       >
                         <button
-                          onClick={() => toggleStepCompletion(step.id)}
-                          className="mr-4 focus:outline-none"
+                          onClick={() => toggleStepCompletion(step._id)}
+                          disabled={updatingStep === step._id}
+                          className="mr-4 focus:outline-none disabled:opacity-50"
                         >
-                          {step.completed ? (
+                          {updatingStep === step._id ? (
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                          ) : step.completed ? (
                             <CheckCircle className="h-6 w-6 text-green-600" />
                           ) : (
                             <Circle className="h-6 w-6 text-gray-400 hover:text-blue-600" />
@@ -316,6 +467,9 @@ const RoadmapView = () => {
                               }`}>
                                 {step.title}
                               </h4>
+                              {step.description && (
+                                <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+                              )}
                             </div>
                             <div className="flex items-center text-sm text-gray-500">
                               <Clock className="h-4 w-4 mr-1" />
@@ -332,14 +486,18 @@ const RoadmapView = () => {
                 <div className="mt-6 flex justify-between items-center pt-6 border-t border-gray-200">
                   <div className="flex items-center text-sm text-gray-500">
                     <Calendar className="h-4 w-4 mr-1" />
-                    Started on {new Date(selectedRoadmap.startedAt).toLocaleDateString('en-US', {
+                    Started on {new Date(selectedRoadmap.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric'
                     })}
                   </div>
                   <div className="flex space-x-3">
-                    <button className="flex items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    <button 
+                      onClick={handleResetProgress}
+                      disabled={loading}
+                      className="flex items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                    >
                       <RotateCcw className="h-4 w-4 mr-2" />
                       Reset Progress
                     </button>

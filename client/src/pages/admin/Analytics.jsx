@@ -7,39 +7,34 @@ import {
   Map, 
   Clock,
   Award,
-  Activity
+  Activity,
+  Loader
 } from 'lucide-react';
+import { getAnalyticsDashboard } from '../../services/api';
 
 const Analytics = () => {
-  const [analyticsData, setAnalyticsData] = useState({
-    totalUsers: 1247,
-    activeUsers: 892,
-    totalGoals: 156,
-    completedGoals: 89,
-    totalRoadmaps: 45,
-    activeRoadmaps: 32,
-    avgCompletionTime: 28,
-    userGrowth: 12.5
-  });
-
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [timeRange, setTimeRange] = useState('30d');
 
-  // Mock data for charts
-  const userGrowthData = [
-    { month: 'Jan', users: 850 },
-    { month: 'Feb', users: 920 },
-    { month: 'Mar', users: 1050 },
-    { month: 'Apr', users: 1180 },
-    { month: 'May', users: 1247 }
-  ];
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [timeRange]);
 
-  const goalCompletionData = [
-    { category: 'Frontend Development', completed: 25, total: 40 },
-    { category: 'Backend Development', completed: 18, total: 30 },
-    { category: 'Data Science', completed: 22, total: 35 },
-    { category: 'DevOps', completed: 12, total: 25 },
-    { category: 'Mobile Development', completed: 12, total: 26 }
-  ];
+  const fetchAnalyticsData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getAnalyticsDashboard(timeRange);
+      setAnalyticsData(response.data);
+    } catch (err) {
+      console.error('Error fetching analytics data:', err);
+      setError('Failed to load analytics data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const StatCard = ({ title, value, icon: Icon, trend, trendValue, color = "blue" }) => (
     <div className="bg-white rounded-lg shadow-md p-6">
@@ -47,7 +42,7 @@ const Analytics = () => {
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
           <p className="text-3xl font-bold text-gray-900">{value}</p>
-          {trend && (
+          {trend && trendValue !== undefined && (
             <div className={`flex items-center mt-2 text-sm ${
               trend === 'up' ? 'text-green-600' : 'text-red-600'
             }`}>
@@ -62,6 +57,43 @@ const Analytics = () => {
       </div>
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-center h-64">
+          <Loader className="h-8 w-8 animate-spin text-blue-600" />
+          <span className="ml-2 text-gray-600">Loading analytics data...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="text-red-600">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error Loading Data</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <button 
+                onClick={fetchAnalyticsData}
+                className="mt-2 text-sm text-red-800 underline hover:text-red-900"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -98,15 +130,15 @@ const Analytics = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Total Users"
-          value={analyticsData.totalUsers.toLocaleString()}
+          value={analyticsData?.totalUsers?.toLocaleString() || '0'}
           icon={Users}
           trend="up"
-          trendValue={analyticsData.userGrowth}
+          trendValue={analyticsData?.userGrowth}
           color="blue"
         />
         <StatCard
           title="Active Users"
-          value={analyticsData.activeUsers.toLocaleString()}
+          value={analyticsData?.activeUsers?.toLocaleString() || '0'}
           icon={Activity}
           trend="up"
           trendValue="8.2"
@@ -114,7 +146,7 @@ const Analytics = () => {
         />
         <StatCard
           title="Goals Completed"
-          value={analyticsData.completedGoals}
+          value={analyticsData?.completedGoals || '0'}
           icon={Target}
           trend="up"
           trendValue="15.3"
@@ -122,7 +154,7 @@ const Analytics = () => {
         />
         <StatCard
           title="Active Roadmaps"
-          value={analyticsData.activeRoadmaps}
+          value={analyticsData?.activeRoadmaps || '0'}
           icon={Map}
           trend="up"
           trendValue="6.7"
@@ -136,22 +168,29 @@ const Analytics = () => {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">User Growth</h3>
           <div className="space-y-4">
-            {userGrowthData.map((data, index) => (
-              <div key={data.month} className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{data.month}</span>
-                <div className="flex items-center space-x-3">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full" 
-                      style={{ width: `${(data.users / 1300) * 100}%` }}
-                    ></div>
+            {analyticsData?.userGrowthData?.map((data, index) => {
+              const maxUsers = Math.max(...(analyticsData?.userGrowthData?.map(d => d.users) || [1]));
+              return (
+                <div key={data.month} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">{data.month}</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-32 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(data.users / maxUsers) * 100}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-medium text-gray-900 w-12 text-right">
+                      {data.users}
+                    </span>
                   </div>
-                  <span className="text-sm font-medium text-gray-900 w-12 text-right">
-                    {data.users}
-                  </span>
                 </div>
+              );
+            }) || (
+              <div className="text-center text-gray-500 py-8">
+                No user growth data available
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -159,7 +198,7 @@ const Analytics = () => {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Goal Completion by Category</h3>
           <div className="space-y-4">
-            {goalCompletionData.map((data, index) => (
+            {analyticsData?.goalCompletionData?.map((data, index) => (
               <div key={data.category}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-sm text-gray-600">{data.category}</span>
@@ -170,14 +209,18 @@ const Analytics = () => {
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-green-600 h-2 rounded-full" 
-                    style={{ width: `${(data.completed / data.total) * 100}%` }}
+                    style={{ width: `${data.total > 0 ? (data.completed / data.total) * 100 : 0}%` }}
                   ></div>
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {Math.round((data.completed / data.total) * 100)}% completion rate
+                  {data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0}% completion rate
                 </div>
               </div>
-            ))}
+            )) || (
+              <div className="text-center text-gray-500 py-8">
+                No goal completion data available
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -199,7 +242,10 @@ const Analytics = () => {
             <Award className="h-6 w-6 text-green-600" />
           </div>
           <p className="text-3xl font-bold text-gray-900">
-            {Math.round((analyticsData.completedGoals / analyticsData.totalGoals) * 100)}%
+            {analyticsData?.totalGoals > 0 
+              ? Math.round((analyticsData.completedGoals / analyticsData.totalGoals) * 100)
+              : 0
+            }%
           </p>
           <p className="text-sm text-gray-600 mt-2">Goal completion rate</p>
         </div>
@@ -209,7 +255,9 @@ const Analytics = () => {
             <h3 className="text-lg font-semibold text-gray-900">Engagement Score</h3>
             <BarChart3 className="h-6 w-6 text-purple-600" />
           </div>
-          <p className="text-3xl font-bold text-gray-900">8.7/10</p>
+          <p className="text-3xl font-bold text-gray-900">
+            {analyticsData?.engagementScore || '0'}/10
+          </p>
           <p className="text-sm text-gray-600 mt-2">User satisfaction rating</p>
         </div>
       </div>

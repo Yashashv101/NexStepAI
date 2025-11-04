@@ -12,7 +12,8 @@ import {
   Award,
   AlertCircle
 } from 'lucide-react';
-import { getCurrentUser, updateCurrentUser } from '../../services/api';
+import { getCurrentUser, updateCurrentUser, getUserDashboardStats, getUserActivities } from '../../services/api';
+import cacheService from '../../services/cacheService';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -28,10 +29,14 @@ const Profile = () => {
     roadmapsInProgress: 0,
     totalLearningTime: 0
   });
+  const [activities, setActivities] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [loadingActivities, setLoadingActivities] = useState(false);
 
   useEffect(() => {
     fetchUserProfile();
     fetchUserStats();
+    fetchUserActivities();
   }, []);
 
   const fetchUserProfile = async () => {
@@ -59,16 +64,73 @@ const Profile = () => {
 
   const fetchUserStats = async () => {
     try {
-      // TODO: Replace with actual API call to get user statistics
-      const mockStats = {
-        goalsCompleted: 3,
-        roadmapsInProgress: 2,
-        totalLearningTime: 45 // hours
-      };
+      setLoadingStats(true);
       
-      setStats(mockStats);
+      // Try to get cached data first
+      const cachedStats = cacheService.get('user-dashboard-stats');
+      if (cachedStats) {
+        setStats({
+          goalsCompleted: cachedStats.completedGoals || 0,
+          roadmapsInProgress: cachedStats.activeRoadmaps || 0,
+          totalLearningTime: Math.round((cachedStats.weeklyLearningTime || 0) * 4) // Convert weekly to monthly estimate
+        });
+        setLoadingStats(false);
+        return;
+      }
+
+      const response = await getUserDashboardStats();
+      
+      if (response.success) {
+        const data = response.data;
+        setStats({
+          goalsCompleted: data.completedGoals || 0,
+          roadmapsInProgress: data.activeRoadmaps || 0,
+          totalLearningTime: Math.round((data.weeklyLearningTime || 0) * 4) // Convert weekly to monthly estimate
+        });
+        
+        // Cache the stats data
+        cacheService.set('user-dashboard-stats', data, 5 * 60 * 1000); // 5 minutes TTL
+      } else {
+        console.error('Failed to fetch user stats:', response.message);
+        // Keep default values on error
+      }
     } catch (error) {
       console.error('Error fetching user stats:', error);
+      // Keep default values on error
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  const fetchUserActivities = async () => {
+    try {
+      setLoadingActivities(true);
+      
+      // Try to get cached data first
+      const cachedActivities = cacheService.get('user-activities');
+      if (cachedActivities) {
+        setActivities(cachedActivities.slice(0, 3)); // Show only recent 3 activities
+        setLoadingActivities(false);
+        return;
+      }
+
+      const response = await getUserActivities();
+      
+      if (response.success) {
+        const activities = response.data || [];
+        setActivities(activities.slice(0, 3)); // Show only recent 3 activities
+        
+        // Cache the activities data
+        cacheService.set('user-activities', activities, 2 * 60 * 1000); // 2 minutes TTL
+      } else {
+        console.error('Failed to fetch user activities:', response.message);
+        setActivities([]);
+      }
+    } catch (error) {
+      console.error('Error fetching user activities:', error);
+      setActivities([]);
+    } finally {
+      setLoadingActivities(false);
     }
   };
 
@@ -95,6 +157,11 @@ const Profile = () => {
       if (response.success) {
         setUser(response.data);
         setIsEditing(false);
+        
+        // Invalidate relevant caches
+        cacheService.delete('current-user');
+        cacheService.delete('user-dashboard-stats');
+        
         // Show success message (you might want to use a toast notification)
         alert('Profile updated successfully!');
       } else {
@@ -306,69 +373,113 @@ const Profile = () => {
         {/* Statistics */}
         <div className="mb-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">Your Progress</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard
-              icon={Award}
-              title="Goals Completed"
-              value={stats.goalsCompleted}
-              color="bg-green-500"
-            />
-            <StatCard
-              icon={Map}
-              title="Roadmaps in Progress"
-              value={stats.roadmapsInProgress}
-              color="bg-blue-500"
-            />
-            <StatCard
-              icon={Target}
-              title="Learning Hours"
-              value={`${stats.totalLearningTime}h`}
-              color="bg-purple-500"
-            />
-          </div>
+          {loadingStats ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-center">
+                    <div className="p-3 rounded-full bg-gray-200 mr-4 animate-pulse">
+                      <div className="h-6 w-6 bg-gray-300 rounded"></div>
+                    </div>
+                    <div>
+                      <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-2"></div>
+                      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatCard
+                icon={Award}
+                title="Goals Completed"
+                value={stats.goalsCompleted}
+                color="bg-green-500"
+              />
+              <StatCard
+                icon={Map}
+                title="Roadmaps in Progress"
+                value={stats.roadmapsInProgress}
+                color="bg-blue-500"
+              />
+              <StatCard
+                icon={Target}
+                title="Learning Hours"
+                value={`${stats.totalLearningTime}h`}
+                color="bg-purple-500"
+              />
+            </div>
+          )}
         </div>
 
         {/* Recent Activity */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between py-3 border-b border-gray-200">
-              <div className="flex items-center">
-                <div className="bg-green-100 p-2 rounded-full mr-3">
-                  <Award className="h-4 w-4 text-green-600" />
+          {loadingActivities ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between py-3 border-b border-gray-200">
+                  <div className="flex items-center">
+                    <div className="bg-gray-200 p-2 rounded-full mr-3 animate-pulse">
+                      <div className="h-4 w-4 bg-gray-300 rounded"></div>
+                    </div>
+                    <div>
+                      <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-1"></div>
+                      <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Completed React Fundamentals</p>
-                  <p className="text-xs text-gray-500">Full Stack Developer roadmap</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">2 days ago</span>
+              ))}
             </div>
-            <div className="flex items-center justify-between py-3 border-b border-gray-200">
-              <div className="flex items-center">
-                <div className="bg-blue-100 p-2 rounded-full mr-3">
-                  <Map className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Started new roadmap</p>
-                  <p className="text-xs text-gray-500">Mobile App Development</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">1 week ago</span>
+          ) : activities.length > 0 ? (
+            <div className="space-y-4">
+              {activities.map((activity, index) => {
+                const getActivityIcon = (type) => {
+                  switch (type) {
+                    case 'step_completed':
+                      return { icon: Award, bgColor: 'bg-green-100', iconColor: 'text-green-600' };
+                    case 'roadmap_started':
+                      return { icon: Map, bgColor: 'bg-blue-100', iconColor: 'text-blue-600' };
+                    case 'goal_set':
+                      return { icon: Target, bgColor: 'bg-purple-100', iconColor: 'text-purple-600' };
+                    default:
+                      return { icon: Award, bgColor: 'bg-gray-100', iconColor: 'text-gray-600' };
+                  }
+                };
+
+                const { icon: ActivityIcon, bgColor, iconColor } = getActivityIcon(activity.type);
+                const timeAgo = new Date(activity.timestamp).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric'
+                });
+
+                return (
+                  <div key={activity._id || index} className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
+                    <div className="flex items-center">
+                      <div className={`${bgColor} p-2 rounded-full mr-3`}>
+                        <ActivityIcon className={`h-4 w-4 ${iconColor}`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{activity.description}</p>
+                        {activity.details && (
+                          <p className="text-xs text-gray-500">{activity.details}</p>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-500">{timeAgo}</span>
+                  </div>
+                );
+              })}
             </div>
-            <div className="flex items-center justify-between py-3">
-              <div className="flex items-center">
-                <div className="bg-purple-100 p-2 rounded-full mr-3">
-                  <Target className="h-4 w-4 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Set new learning goal</p>
-                  <p className="text-xs text-gray-500">Data Science Specialist</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">2 weeks ago</span>
+          ) : (
+            <div className="text-center py-8">
+              <Award className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No recent activity</h3>
+              <p className="mt-1 text-sm text-gray-500">Start learning to see your activity here!</p>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

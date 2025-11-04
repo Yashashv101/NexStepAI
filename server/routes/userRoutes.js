@@ -4,7 +4,9 @@ const {
   getUser,
   updateUser,
   deleteUser,
-  getUserStats
+  getUserStats,
+  getUserDashboardStats,
+  getUserNotifications
 } = require('../controllers/userController');
 const auth = require('../middleware/authMiddleware');
 const roleAuth = require('../middleware/roleAuth');
@@ -12,8 +14,14 @@ const { validateInput } = require('../middleware/validateInput');
 
 const router = express.Router();
 
-// All routes require authentication and admin role
+// Routes that require authentication but not admin role
 router.use(auth);
+
+// User-specific routes (accessible by the user themselves)
+router.route('/dashboard-stats').get(getUserDashboardStats);
+router.route('/notifications').get(getUserNotifications);
+
+// Admin-only routes
 router.use(roleAuth('admin'));
 
 // User management routes

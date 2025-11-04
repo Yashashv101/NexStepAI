@@ -89,6 +89,7 @@ const ManageGoals = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      setError(null);
       
       // Process form data
       const goalData = {
@@ -98,10 +99,14 @@ const ManageGoals = () => {
         skillsLearned: newGoal.skillsLearned.split(',').map(skill => skill.trim()).filter(skill => skill)
       };
 
+      console.log('Submitting goal data:', goalData);
+
       if (editingGoal) {
         await updateGoal(editingGoal._id, goalData);
+        console.log('Goal updated successfully');
       } else {
         await createGoal(goalData);
+        console.log('Goal created successfully');
       }
       
       await fetchGoals();
@@ -117,25 +122,61 @@ const ManageGoals = () => {
       });
       setEditingGoal(null);
       setShowCreateModal(false);
-      setError(null);
     } catch (error) {
       console.error('Error saving goal:', error);
-      setError(editingGoal ? 'Failed to update goal.' : 'Failed to create goal.');
+      
+      // Use enhanced error information if available
+      let errorMessage = editingGoal ? 'Failed to update goal.' : 'Failed to create goal.';
+      
+      if (error.friendlyMessage) {
+        errorMessage = error.friendlyMessage;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        errorMessage = `Validation errors: ${error.response.data.errors.join(', ')}`;
+      }
+      
+      // Log detailed error information for debugging
+      if (error.errorDetails) {
+        console.error('Detailed error information:', error.errorDetails);
+      }
+      
+      if (error.response?.data?.validationDetails) {
+        console.error('Validation details:', error.response.data.validationDetails);
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteGoal = async (goalId) => {
-    if (window.confirm('Are you sure you want to delete this goal?')) {
+    const goal = goals.find(g => g._id === goalId);
+    const goalName = goal ? goal.name : 'this goal';
+    
+    const confirmMessage = `Are you sure you want to delete "${goalName}"?\n\n` +
+      `⚠️ WARNING: This action will also permanently delete:\n` +
+      `• All associated roadmaps\n` +
+      `• All user progress records\n` +
+      `• All related resources\n` +
+      `• Activity references\n\n` +
+      `This action cannot be undone.`;
+    
+    if (window.confirm(confirmMessage)) {
       try {
         setLoading(true);
+        setError(null);
         await deleteGoal(goalId);
         await fetchGoals();
-        setError(null);
+        
+        // Show success message
+        alert(`Goal "${goalName}" and all associated records have been successfully deleted.`);
       } catch (error) {
         console.error('Error deleting goal:', error);
-        setError('Failed to delete goal.');
+        const errorMessage = error.response?.data?.message || 'Failed to delete goal. Please try again.';
+        setError(errorMessage);
+        alert(`Error: ${errorMessage}`);
       } finally {
         setLoading(false);
       }
@@ -351,13 +392,28 @@ const ManageGoals = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Category
                     </label>
-                    <input
-                      type="text"
+                    <select
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       value={newGoal.category}
                       onChange={(e) => setNewGoal({...newGoal, category: e.target.value})}
-                    />
+                    >
+                      <option value="">Select a category</option>
+                      <option value="Web Development">Web Development</option>
+                      <option value="Mobile Development">Mobile Development</option>
+                      <option value="Data Science">Data Science</option>
+                      <option value="Machine Learning">Machine Learning</option>
+                      <option value="DevOps">DevOps</option>
+                      <option value="Cybersecurity">Cybersecurity</option>
+                      <option value="UI/UX Design">UI/UX Design</option>
+                      <option value="Cloud Computing">Cloud Computing</option>
+                      <option value="Backend Development">Backend Development</option>
+                      <option value="Frontend Development">Frontend Development</option>
+                      <option value="Full Stack Development">Full Stack Development</option>
+                      <option value="Game Development">Game Development</option>
+                      <option value="Blockchain">Blockchain</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
