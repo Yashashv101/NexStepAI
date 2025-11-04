@@ -112,11 +112,58 @@ function Dashboard() {
     const now = new Date();
     const diffTime = Math.abs(now - date);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 1) return '1 day ago';
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
     return `${Math.ceil(diffDays / 30)} months ago`;
+  };
+
+  // Toggle roadmap expansion
+  const toggleRoadmapExpansion = (roadmapId) => {
+    setExpandedRoadmaps(prev => ({
+      ...prev,
+      [roadmapId]: !prev[roadmapId]
+    }));
+  };
+
+  // Handle step completion
+  const handleStepCompletion = async (roadmapId, stepId, completed) => {
+    try {
+      setStepUpdating(prev => ({ ...prev, [stepId]: true }));
+
+      const response = await updateStepProgress(roadmapId, stepId, { completed });
+
+      if (response.success) {
+        // Update local state
+        setRoadmapItems(prev => prev.map(roadmap => {
+          if (roadmap.id === roadmapId) {
+            const updatedSteps = (roadmap.steps || []).map(step =>
+              step.id === stepId ? { ...step, completed } : step
+            );
+
+            // Recalculate progress
+            const completedSteps = updatedSteps.filter(step => step.completed).length;
+            const newProgress = Math.round((completedSteps / updatedSteps.length) * 100);
+
+            return {
+              ...roadmap,
+              steps: updatedSteps,
+              progress: newProgress
+            };
+          }
+          return roadmap;
+        }));
+
+        // Update context
+        updateUserProgress(roadmapId, response.data);
+      }
+    } catch (error) {
+      console.error('Error updating step progress:', error);
+      // Optionally show error message to user
+    } finally {
+      setStepUpdating(prev => ({ ...prev, [stepId]: false }));
+    }
   };
 
   return (
