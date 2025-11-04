@@ -6,6 +6,16 @@ function SkillLevel() {
   const [selectedLevel, setSelectedLevel] = useState('');
   const navigate = useNavigate();
 
+  const {
+    selectedGoal,
+    selectSkillLevel,
+    setSkillValidation,
+    clearSkillValidation,
+    openRoadmapModal,
+    skillValidationMessage,
+    skillValidationType
+  } = useAppContext();
+
   const skillLevels = [
     {
       id: 'beginner',
