@@ -19,7 +19,10 @@ const initialState = {
 
   // Validation Messages
   skillValidationMessage: null,
-  skillValidationType: null // 'success' or 'warning'
+  skillValidationType: null, // 'success' or 'warning'
+
+  // Toast Notifications
+  toasts: []
 };
 
 // Action types
