@@ -141,9 +141,9 @@ const GoalSelection = () => {
         </div>
         
         <div className="flex justify-center mt-8">
-          <button 
+          <button
             type="submit"
-            disabled={!selectedGoal}
+            disabled={!localSelectedGoal}
             className="px-8 py-3 bg-indigo-600 text-white text-lg font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             Next Step
