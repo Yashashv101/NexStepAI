@@ -55,13 +55,19 @@ const GoalSelection = () => {
             id: 'sample-web-dev',
             title: 'Web Developer',
             icon: '🌐',
-            description: 'Build websites and web applications'
+            description: 'Build websites and web applications',
+            difficulty: 'beginner',
+            category: 'Web Development',
+            estimatedTime: '3 months'
           },
           {
             id: 'sample-data-science',
             title: 'Data Scientist',
             icon: '📊',
-            description: 'Analyze and interpret complex data'
+            description: 'Analyze and interpret complex data',
+            difficulty: 'intermediate',
+            category: 'Data Science',
+            estimatedTime: '6 months'
           }
         ]);
       } finally {
