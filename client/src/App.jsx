@@ -22,6 +22,7 @@ import ManageGoals from './pages/admin/ManageGoals';
 import ManageRoadmaps from './pages/admin/ManageRoadmaps';
 import Analytics from './pages/admin/Analytics';
 import RoadmapModal from './components/RoadmapModal';
+import ToastContainer from './components/ToastContainer';
 
 function App() {
   return (
