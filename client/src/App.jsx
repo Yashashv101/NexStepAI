@@ -43,21 +43,13 @@ function App() {
                 </RoleBasedRoute>
               } 
             />
-            <Route 
-              path="/skill-level" 
+            <Route
+              path="/skill-level"
               element={
                 <RoleBasedRoute requireAuth={true}>
                   <SkillLevel />
                 </RoleBasedRoute>
-              } 
-            />
-            <Route 
-              path="/time-selection" 
-              element={
-                <RoleBasedRoute requireAuth={true}>
-                  <TimeSelection />
-                </RoleBasedRoute>
-              } 
+              }
             />
 
             {/* User routes */}
