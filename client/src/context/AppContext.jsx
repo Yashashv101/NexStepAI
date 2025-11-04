@@ -299,6 +299,20 @@ export const AppProvider = ({ children }) => {
       }
     },
 
+    addToast: (message, type = 'info', duration = 5000) => {
+      const toast = {
+        id: generateToastId(),
+        message,
+        type,
+        duration
+      };
+      dispatch({ type: actionTypes.ADD_TOAST, payload: toast });
+    },
+
+    removeToast: (toastId) => {
+      dispatch({ type: actionTypes.REMOVE_TOAST, payload: toastId });
+    },
+
     startRoadmap: async (goalId, skillLevel) => {
       try {
         dispatch({ type: actionTypes.SET_LOADING, payload: true });
@@ -315,6 +329,15 @@ export const AppProvider = ({ children }) => {
             }
           });
 
+          // Show success toast
+          const toast = {
+            id: generateToastId(),
+            message: 'Roadmap added to your learning journey!',
+            type: 'success',
+            duration: 5000
+          };
+          dispatch({ type: actionTypes.ADD_TOAST, payload: toast });
+
           // Clear selected goal and skill level after starting roadmap
           dispatch({ type: actionTypes.CLEAR_SELECTED_GOAL });
 
@@ -325,6 +348,16 @@ export const AppProvider = ({ children }) => {
       } catch (error) {
         const errorMessage = error.response?.data?.message || error.message || 'Failed to start roadmap';
         dispatch({ type: actionTypes.SET_ERROR, payload: errorMessage });
+
+        // Show error toast
+        const toast = {
+          id: generateToastId(),
+          message: errorMessage,
+          type: 'error',
+          duration: 5000
+        };
+        dispatch({ type: actionTypes.ADD_TOAST, payload: toast });
+
         throw error;
       } finally {
         dispatch({ type: actionTypes.SET_LOADING, payload: false });
