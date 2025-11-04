@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { AppProvider } from './context/AppContext';
 import RoleBasedRoute from './components/RoleBasedRoute';
 import RoleBasedNavbar from './components/RoleBasedNavbar';
 
