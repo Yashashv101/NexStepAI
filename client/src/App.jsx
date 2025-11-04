@@ -134,6 +134,7 @@ function App() {
           </Routes>
         </div>
       </Router>
+      </AppProvider>
     </AuthProvider>
   );
 }
