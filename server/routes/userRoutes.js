@@ -8,6 +8,7 @@ const {
   getUserDashboardStats,
   getUserNotifications
 } = require('../controllers/userController');
+const { startUserRoadmap } = require('../controllers/roadmapController');
 const auth = require('../middleware/authMiddleware');
 const roleAuth = require('../middleware/roleAuth');
 const { validateInput } = require('../middleware/validateInput');
