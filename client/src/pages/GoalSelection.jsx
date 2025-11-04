@@ -4,12 +4,13 @@ import { getGoals } from '../services/api';
 import { useAppContext } from '../context/AppContext';
 
 const GoalSelection = () => {
+  const [localSelectedGoal, setLocalSelectedGoal] = useState('');
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const { selectGoal, selectedGoal } = useAppContext();
+  const { selectGoal } = useAppContext();
   
   // Default icons to use when API goals don't have icons
   const defaultIcons = {
