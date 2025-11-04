@@ -145,7 +145,7 @@ function SkillLevel() {
                     name="skillLevel" 
                     className="mr-2"
                     checked={selectedLevel === level.id}
-                    onChange={() => setSelectedLevel(level.id)}
+                    onChange={() => handleSkillLevelSelect(level.id)}
                   />
                   <label htmlFor={level.id} className="text-gray-700">Select</label>
                 </div>
