@@ -37,6 +37,8 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const { activeRoadmaps, updateUserProgress } = useAppContext();
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
