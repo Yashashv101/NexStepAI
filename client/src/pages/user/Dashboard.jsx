@@ -1,17 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  TrendingUp, 
-  Clock, 
-  Target, 
-  BookOpen, 
-  Award, 
+import {
+  TrendingUp,
+  Clock,
+  Target,
+  BookOpen,
+  Award,
   Calendar,
   ArrowRight,
   Play,
-  User
+  User,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle,
+  Circle
 } from 'lucide-react';
-import { getRoadmaps, getUserDashboardStats, getUserActivities } from '../../services/api';
+import { getRoadmaps, getUserDashboardStats, getUserActivities, updateStepProgress } from '../../services/api';
+import { useAppContext } from '../../context/AppContext';
 
 function Dashboard() {
   const [roadmapItems, setRoadmapItems] = useState([]);
