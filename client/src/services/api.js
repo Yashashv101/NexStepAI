@@ -187,6 +187,16 @@ export const getUserRoadmaps = async () => {
   }
 };
 
+export const startUserRoadmap = async (goalId, skillLevel) => {
+  try {
+    const response = await api.post('/users/roadmaps', { goalId, skillLevel });
+    return response.data;
+  } catch (error) {
+    console.error('Error starting user roadmap:', error);
+    throw error;
+  }
+};
+
 export const getUserProgress = async (roadmapId) => {
   try {
     const response = await api.get(`/progress/${roadmapId}`);
