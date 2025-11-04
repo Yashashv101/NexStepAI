@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getGoals } from '../services/api';
+import { useAppContext } from '../context/AppContext';
 
 const GoalSelection = () => {
   const [selectedGoal, setSelectedGoal] = useState('');
