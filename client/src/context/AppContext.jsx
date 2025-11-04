@@ -158,6 +158,18 @@ const appReducer = (state, action) => {
         roadmapModalOpen: false
       };
 
+    case actionTypes.ADD_TOAST:
+      return {
+        ...state,
+        toasts: [...state.toasts, action.payload]
+      };
+
+    case actionTypes.REMOVE_TOAST:
+      return {
+        ...state,
+        toasts: state.toasts.filter(toast => toast.id !== action.payload)
+      };
+
     default:
       return state;
   }
