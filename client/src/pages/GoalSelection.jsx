@@ -119,12 +119,12 @@ const GoalSelection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {goals.length > 0 ? (
             goals.map((goal) => (
-              <div 
+              <div
                 key={goal.id}
                 className={`p-6 border-2 rounded-xl cursor-pointer transition-all shadow-sm hover:shadow-md ${
-                  selectedGoal === goal.id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-300' : 'border-gray-200 hover:border-indigo-300'
+                  localSelectedGoal === goal.id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-300' : 'border-gray-200 hover:border-indigo-300'
                 }`}
-                onClick={() => setSelectedGoal(goal.id)}
+                onClick={() => setLocalSelectedGoal(goal.id)}
               >
                 <div className="flex flex-col items-center text-center">
                   <span className="text-4xl mb-3">{goal.icon}</span>
