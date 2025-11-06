@@ -7,13 +7,12 @@ import RoleBasedNavbar from './components/RoleBasedNavbar';
 // Public pages
 import Auth from './pages/Auth';
 import GoalSelection from './pages/GoalSelection';
-import SkillLevel from './pages/user/SkillLevel';
-import TimeSelection from './pages/user/TimeSelection';
 
 // User pages
 import Dashboard from './pages/user/Dashboard';
 import Profile from './pages/user/Profile';
 import RoadmapView from './pages/user/RoadmapView';
+import AIRoadmapGenerator from './pages/user/AIRoadmapGenerator';
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -31,99 +30,91 @@ function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/auth" element={<Auth />} />
-            
+
             {/* Onboarding routes - require authentication but no specific role */}
-            <Route 
-              path="/goal-selection" 
+            <Route
+              path="/goal-selection"
               element={
                 <RoleBasedRoute requireAuth={true}>
                   <GoalSelection />
                 </RoleBasedRoute>
-              } 
-            />
-            <Route 
-              path="/skill-level" 
-              element={
-                <RoleBasedRoute requireAuth={true}>
-                  <SkillLevel />
-                </RoleBasedRoute>
-              } 
-            />
-            <Route 
-              path="/time-selection" 
-              element={
-                <RoleBasedRoute requireAuth={true}>
-                  <TimeSelection />
-                </RoleBasedRoute>
-              } 
+              }
             />
 
             {/* User routes */}
-            <Route 
-              path="/dashboard" 
+            <Route
+              path="/dashboard"
               element={
                 <RoleBasedRoute allowedRoles={['user']}>
                   <Dashboard />
                 </RoleBasedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/user/profile" 
+            <Route
+              path="/user/profile"
               element={
                 <RoleBasedRoute allowedRoles={['user']}>
                   <Profile />
                 </RoleBasedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/user/roadmaps" 
+            <Route
+              path="/user/roadmaps"
               element={
                 <RoleBasedRoute allowedRoles={['user']}>
                   <RoadmapView />
                 </RoleBasedRoute>
-              } 
+              }
+            />
+            <Route
+              path="/user/ai-roadmap"
+              element={
+                <RoleBasedRoute allowedRoles={['user']}>
+                  <AIRoadmapGenerator />
+                </RoleBasedRoute>
+              }
             />
 
             {/* Admin routes */}
-            <Route 
-              path="/admin/dashboard" 
+            <Route
+              path="/admin/dashboard"
               element={
                 <RoleBasedRoute allowedRoles={['admin']}>
                   <AdminDashboard />
                 </RoleBasedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/admin/users" 
+            <Route
+              path="/admin/users"
               element={
                 <RoleBasedRoute allowedRoles={['admin']}>
                   <ManageUsers />
                 </RoleBasedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/admin/goals" 
+            <Route
+              path="/admin/goals"
               element={
                 <RoleBasedRoute allowedRoles={['admin']}>
                   <ManageGoals />
                 </RoleBasedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/admin/roadmaps" 
+            <Route
+              path="/admin/roadmaps"
               element={
                 <RoleBasedRoute allowedRoles={['admin']}>
                   <ManageRoadmaps />
                 </RoleBasedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/admin/analytics" 
+            <Route
+              path="/admin/analytics"
               element={
                 <RoleBasedRoute allowedRoles={['admin']}>
                   <Analytics />
                 </RoleBasedRoute>
-              } 
+              }
             />
 
             {/* Default redirects */}

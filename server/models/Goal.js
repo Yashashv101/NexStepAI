@@ -17,7 +17,7 @@ const GoalSchema = new mongoose.Schema({
     required: [true, 'Please add a category'],
     enum: [
       'Web Development',
-      'Mobile Development', 
+      'Mobile Development',
       'Data Science',
       'Machine Learning',
       'DevOps',
@@ -73,6 +73,44 @@ const GoalSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  // AI Enhancement tracking
+  isUserSubmitted: {
+    type: Boolean,
+    default: false
+  },
+  isAIEnhanced: {
+    type: Boolean,
+    default: false
+  },
+  aiMetadata: {
+    service: {
+      type: String,
+      enum: ['gemini', 'manual'],
+      default: 'manual'
+    },
+    enhancedAt: {
+      type: Date
+    },
+    originalText: {
+      type: String
+    }
+  },
+  // Admin moderation
+  moderationStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected', 'flagged'],
+    default: 'approved'
+  },
+  moderationNotes: {
+    type: String
+  },
+  moderatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  moderatedAt: {
+    type: Date
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -89,7 +127,7 @@ GoalSchema.index({ isActive: 1 });
 GoalSchema.index({ createdAt: -1 });
 
 // Update the updatedAt field before saving
-GoalSchema.pre('save', function(next) {
+GoalSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });

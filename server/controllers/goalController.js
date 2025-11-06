@@ -3,6 +3,7 @@ const Activity = require('../models/Activity');
 const Roadmap = require('../models/Roadmap');
 const UserProgress = require('../models/UserProgress');
 const Resource = require('../models/Resource');
+const { cache, generateCacheKey } = require('../utils/cache');
 
 // @desc    Get all goals
 // @route   GET /api/goals
@@ -10,18 +11,18 @@ const Resource = require('../models/Resource');
 exports.getGoals = async (req, res) => {
   try {
     const { category, difficulty, search, page = 1, limit = 10 } = req.query;
-    
+
     // Build query
     let query = { isActive: true };
-    
+
     if (category && category !== 'all') {
       query.category = category;
     }
-    
+
     if (difficulty && difficulty !== 'all') {
       query.difficulty = difficulty;
     }
-    
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -29,16 +30,16 @@ exports.getGoals = async (req, res) => {
         { tags: { $in: [new RegExp(search, 'i')] } }
       ];
     }
-    
+
     // Execute query with pagination
     const goals = await Goal.find(query)
       .populate('createdBy', 'name')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
-    
+
     const total = await Goal.countDocuments(query);
-    
+
     res.status(200).json({
       success: true,
       count: goals.length,
@@ -63,14 +64,14 @@ exports.getGoals = async (req, res) => {
 exports.getGoal = async (req, res) => {
   try {
     const goal = await Goal.findById(req.params.id).populate('createdBy', 'name');
-    
+
     if (!goal) {
       return res.status(404).json({
         success: false,
         message: 'Goal not found'
       });
     }
-    
+
     res.status(200).json({
       success: true,
       data: goal
@@ -128,14 +129,14 @@ exports.createGoal = async (req, res) => {
       if (!category) missingFields.push('category');
       if (!difficulty) missingFields.push('difficulty');
       if (!estimatedTime) missingFields.push('estimatedTime');
-      
+
       console.error('Goal creation validation error:', {
         userId: req.user?.id,
         missingFields,
         providedFields: { name: !!name, description: !!description, category: !!category, difficulty: !!difficulty, estimatedTime: !!estimatedTime },
         timestamp: new Date().toISOString()
       });
-      
+
       return res.status(400).json({
         success: false,
         message: `Please provide all required fields: ${missingFields.join(', ')}`,
@@ -146,7 +147,7 @@ exports.createGoal = async (req, res) => {
     // Validate category against enum values
     const validCategories = [
       'Web Development',
-      'Mobile Development', 
+      'Mobile Development',
       'Data Science',
       'Machine Learning',
       'DevOps',
@@ -154,9 +155,13 @@ exports.createGoal = async (req, res) => {
       'UI/UX Design',
       'Game Development',
       'Blockchain',
-      'Cloud Computing'
+      'Cloud Computing',
+      'AI',
+      'Full Stack Development',
+      'Frontend Development',
+      'Other'
     ];
-    
+
     if (!validCategories.includes(category)) {
       console.error('Goal creation category validation error:', {
         userId: req.user?.id,
@@ -164,7 +169,7 @@ exports.createGoal = async (req, res) => {
         validCategories,
         timestamp: new Date().toISOString()
       });
-      
+
       return res.status(400).json({
         success: false,
         message: `Invalid category. Must be one of: ${validCategories.join(', ')}`,
@@ -224,7 +229,7 @@ exports.createGoal = async (req, res) => {
       requestBody: req.body,
       timestamp: new Date().toISOString()
     });
-    
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(val => val.message);
       const validationDetails = Object.keys(error.errors).reduce((acc, key) => {
@@ -235,13 +240,13 @@ exports.createGoal = async (req, res) => {
         };
         return acc;
       }, {});
-      
+
       console.error('Goal validation error details:', {
         userId: req.user?.id,
         validationErrors: validationDetails,
         timestamp: new Date().toISOString()
       });
-      
+
       return res.status(400).json({
         success: false,
         message: 'Validation Error',
@@ -249,7 +254,7 @@ exports.createGoal = async (req, res) => {
         validationDetails
       });
     }
-    
+
     if (error.name === 'CastError') {
       console.error('Goal creation cast error:', {
         userId: req.user?.id,
@@ -258,7 +263,7 @@ exports.createGoal = async (req, res) => {
         kind: error.kind,
         timestamp: new Date().toISOString()
       });
-      
+
       return res.status(400).json({
         success: false,
         message: 'Invalid data format',
@@ -266,7 +271,7 @@ exports.createGoal = async (req, res) => {
         value: error.value
       });
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Server Error',
@@ -282,14 +287,14 @@ exports.createGoal = async (req, res) => {
 exports.updateGoal = async (req, res) => {
   try {
     let goal = await Goal.findById(req.params.id);
-    
+
     if (!goal) {
       return res.status(404).json({
         success: false,
         message: 'Goal not found'
       });
     }
-    
+
     // Check if user owns the goal or is admin
     if (req.user && (goal.createdBy.toString() !== req.user.id && req.user.role !== 'admin')) {
       return res.status(403).json({
@@ -297,19 +302,19 @@ exports.updateGoal = async (req, res) => {
         message: 'Not authorized to update this goal'
       });
     }
-    
+
     goal = await Goal.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
     });
-    
+
     res.status(200).json({
       success: true,
       data: goal
     });
   } catch (error) {
     console.error('Error updating goal:', error);
-    
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(val => val.message);
       return res.status(400).json({
@@ -318,7 +323,7 @@ exports.updateGoal = async (req, res) => {
         errors: messages
       });
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Server Error',
@@ -342,14 +347,14 @@ exports.deleteGoal = async (req, res) => {
     });
 
     const goal = await Goal.findById(req.params.id);
-    
+
     if (!goal) {
       return res.status(404).json({
         success: false,
         message: 'Goal not found'
       });
     }
-    
+
     // Check if user is authenticated
     if (!req.user) {
       console.error('Delete attempt without authentication');
@@ -358,12 +363,12 @@ exports.deleteGoal = async (req, res) => {
         message: 'Authentication required to delete goals. Please log in again.'
       });
     }
-    
+
     // Check if user owns the goal or is admin
     const goalOwnerId = goal.createdBy.toString();
     const isOwner = goalOwnerId === req.user.id;
     const isAdmin = req.user.role === 'admin';
-    
+
     console.log('Authorization check:', {
       goalOwnerId,
       requestUserId: req.user.id,
@@ -371,7 +376,7 @@ exports.deleteGoal = async (req, res) => {
       isOwner,
       isAdmin
     });
-    
+
     if (!isOwner && !isAdmin) {
       return res.status(403).json({
         success: false,
@@ -381,29 +386,29 @@ exports.deleteGoal = async (req, res) => {
 
     // Implement cascading deletion for related records
     const goalId = req.params.id;
-    
+
     try {
       // Delete associated roadmaps
       const deletedRoadmaps = await Roadmap.deleteMany({ goalId: goalId });
-      
+
       // Delete associated user progress records
       const deletedProgress = await UserProgress.deleteMany({ goalId: goalId });
-      
+
       // Delete associated resources
       const deletedResources = await Resource.deleteMany({ goalId: goalId });
-      
+
       // Update activities to remove goalId reference (soft delete approach)
       await Activity.updateMany(
         { 'metadata.goalId': goalId },
         { $unset: { 'metadata.goalId': '' } }
       );
-      
+
       console.log(`Cascading deletion completed for goal ${goalId}:`, {
         roadmaps: deletedRoadmaps.deletedCount,
         userProgress: deletedProgress.deletedCount,
         resources: deletedResources.deletedCount
       });
-      
+
     } catch (cascadeError) {
       console.error('Error during cascading deletion:', cascadeError);
       return res.status(500).json({
@@ -412,12 +417,19 @@ exports.deleteGoal = async (req, res) => {
         error: cascadeError.message
       });
     }
-    
+
     // Hard delete the goal
     await Goal.findByIdAndDelete(req.params.id);
-    
+
     console.log('Goal deleted successfully:', goalId);
-    
+
+    // Invalidate admin stats cache so dashboard reflects deletions immediately
+    try {
+      cache.delete(generateCacheKey.adminStats());
+    } catch (cacheErr) {
+      console.warn('Failed to invalidate admin stats cache after goal deletion:', cacheErr);
+    }
+
     res.status(200).json({
       success: true,
       message: 'Goal and all associated records deleted successfully',
@@ -442,7 +454,7 @@ exports.deleteGoal = async (req, res) => {
 exports.getGoalCategories = async (req, res) => {
   try {
     const categories = await Goal.distinct('category', { isActive: true });
-    
+
     res.status(200).json({
       success: true,
       data: categories

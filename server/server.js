@@ -21,6 +21,7 @@ const progressRoutes = require('./routes/progressRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const userRoutes = require('./routes/userRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const aiRoadmapRoutes = require('./routes/aiRoadmapRoutes');
 
 // Placeholder for routes that will be implemented later
 const placeholderRouter = express.Router();
@@ -50,6 +51,7 @@ app.use('/api/activities', activityRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/ai', aiRoadmapRoutes);
 app.use('/api/resumes', placeholderRouter);
 app.use('/api/skillgaps', placeholderRouter);
 

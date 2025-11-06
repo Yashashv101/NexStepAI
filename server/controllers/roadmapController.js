@@ -8,40 +8,40 @@ const Activity = require('../models/Activity');
 // @access  Public
 exports.getRoadmaps = async (req, res) => {
   try {
-    const { 
-      goalId, 
-      category, 
-      difficulty, 
-      search, 
-      isPublic, 
+    const {
+      goalId,
+      category,
+      difficulty,
+      search,
+      isPublic,
       isTemplate,
-      page = 1, 
-      limit = 10 
+      page = 1,
+      limit = 10
     } = req.query;
-    
+
     // Build query
     let query = {};
-    
+
     if (goalId) {
       query.goalId = goalId;
     }
-    
+
     if (category && category !== 'all') {
       query.category = category;
     }
-    
+
     if (difficulty && difficulty !== 'all') {
       query.difficulty = difficulty;
     }
-    
+
     if (isPublic !== undefined) {
       query.isPublic = isPublic === 'true';
     }
-    
+
     if (isTemplate !== undefined) {
       query.isTemplate = isTemplate === 'true';
     }
-    
+
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -49,7 +49,7 @@ exports.getRoadmaps = async (req, res) => {
         { tags: { $in: [new RegExp(search, 'i')] } }
       ];
     }
-    
+
     // Execute query with pagination
     const roadmaps = await Roadmap.find(query)
       .populate('goalId', 'name category')
@@ -57,9 +57,9 @@ exports.getRoadmaps = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
-    
+
     const total = await Roadmap.countDocuments(query);
-    
+
     res.status(200).json({
       success: true,
       count: roadmaps.length,
@@ -87,14 +87,14 @@ exports.getRoadmap = async (req, res) => {
       .populate('goalId', 'name category description')
       .populate('userId', 'name')
       .populate('steps.resources');
-    
+
     if (!roadmap) {
       return res.status(404).json({
         success: false,
         message: 'Roadmap not found'
       });
     }
-    
+
     // Get user progress if user is authenticated
     let userProgress = null;
     if (req.user) {
@@ -103,7 +103,7 @@ exports.getRoadmap = async (req, res) => {
         roadmapId: roadmap._id
       });
     }
-    
+
     res.status(200).json({
       success: true,
       data: {
@@ -202,7 +202,7 @@ exports.createRoadmap = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating roadmap:', error);
-    
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(val => val.message);
       return res.status(400).json({
@@ -211,7 +211,7 @@ exports.createRoadmap = async (req, res) => {
         errors: messages
       });
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Server Error',
@@ -226,14 +226,14 @@ exports.createRoadmap = async (req, res) => {
 exports.updateRoadmap = async (req, res) => {
   try {
     let roadmap = await Roadmap.findById(req.params.id);
-    
+
     if (!roadmap) {
       return res.status(404).json({
         success: false,
         message: 'Roadmap not found'
       });
     }
-    
+
     // Check if user owns the roadmap or is admin
     if (req.user && roadmap.userId && (roadmap.userId.toString() !== req.user.id && req.user.role !== 'admin')) {
       return res.status(403).json({
@@ -241,19 +241,19 @@ exports.updateRoadmap = async (req, res) => {
         message: 'Not authorized to update this roadmap'
       });
     }
-    
+
     roadmap = await Roadmap.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
     });
-    
+
     res.status(200).json({
       success: true,
       data: roadmap
     });
   } catch (error) {
     console.error('Error updating roadmap:', error);
-    
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(val => val.message);
       return res.status(400).json({
@@ -262,7 +262,7 @@ exports.updateRoadmap = async (req, res) => {
         errors: messages
       });
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Server Error',
@@ -277,14 +277,14 @@ exports.updateRoadmap = async (req, res) => {
 exports.deleteRoadmap = async (req, res) => {
   try {
     const roadmap = await Roadmap.findById(req.params.id);
-    
+
     if (!roadmap) {
       return res.status(404).json({
         success: false,
         message: 'Roadmap not found'
       });
     }
-    
+
     // Check if user owns the roadmap or is admin
     if (req.user && roadmap.userId && (roadmap.userId.toString() !== req.user.id && req.user.role !== 'admin')) {
       return res.status(403).json({
@@ -292,12 +292,20 @@ exports.deleteRoadmap = async (req, res) => {
         message: 'Not authorized to delete this roadmap'
       });
     }
-    
+
     await Roadmap.findByIdAndDelete(req.params.id);
-    
+
     // Also delete associated user progress
     await UserProgress.deleteMany({ roadmapId: req.params.id });
-    
+
+    // Invalidate admin stats cache so dashboard reflects deletions immediately
+    try {
+      const { cache, generateCacheKey } = require('../utils/cache');
+      cache.delete(generateCacheKey.adminStats());
+    } catch (cacheErr) {
+      console.warn('Failed to invalidate admin stats cache after roadmap deletion:', cacheErr);
+    }
+
     res.status(200).json({
       success: true,
       message: 'Roadmap deleted successfully'
@@ -319,7 +327,7 @@ exports.updateStepCompletion = async (req, res) => {
   try {
     const { id: roadmapId, stepId } = req.params;
     const { completed, timeSpent, notes } = req.body;
-    
+
     const roadmap = await Roadmap.findById(roadmapId);
     if (!roadmap) {
       return res.status(404).json({
@@ -327,13 +335,13 @@ exports.updateStepCompletion = async (req, res) => {
         message: 'Roadmap not found'
       });
     }
-    
+
     // Find or create user progress
     let userProgress = await UserProgress.findOne({
       userId: req.user.id,
       roadmapId: roadmapId
     });
-    
+
     if (!userProgress) {
       userProgress = await UserProgress.create({
         userId: req.user.id,
@@ -342,12 +350,12 @@ exports.updateStepCompletion = async (req, res) => {
         stepProgress: []
       });
     }
-    
+
     // Update step progress
     const stepIndex = userProgress.stepProgress.findIndex(
       step => step.stepId.toString() === stepId
     );
-    
+
     if (stepIndex >= 0) {
       userProgress.stepProgress[stepIndex].completed = completed;
       userProgress.stepProgress[stepIndex].timeSpent = timeSpent || 0;
@@ -364,9 +372,9 @@ exports.updateStepCompletion = async (req, res) => {
         completedAt: completed ? new Date() : null
       });
     }
-    
+
     await userProgress.save();
-    
+
     // Create activity log for step completion
     if (completed) {
       const step = roadmap.steps.id(stepId);
@@ -386,13 +394,242 @@ exports.updateStepCompletion = async (req, res) => {
         });
       }
     }
-    
+
     res.status(200).json({
       success: true,
       data: userProgress
     });
   } catch (error) {
     console.error('Error updating step completion:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Generate roadmap preview (without saving)
+// @route   POST /api/roadmaps/generate-preview
+// @access  Private
+exports.generateRoadmapPreview = async (req, res) => {
+  try {
+    const { goalId, skillLevel } = req.body;
+
+    if (!goalId || !skillLevel) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide goalId and skillLevel'
+      });
+    }
+
+    // Verify goal exists
+    const goal = await Goal.findById(goalId);
+    if (!goal) {
+      return res.status(404).json({
+        success: false,
+        message: 'Goal not found'
+      });
+    }
+
+    // Generate roadmap steps based on goal and skill level
+    const steps = generateStepsForGoal(goal, skillLevel);
+
+    const roadmapPreview = {
+      title: `${goal.name} Learning Path`,
+      description: `Customized learning path for ${goal.name} at ${skillLevel} level`,
+      difficulty: goal.difficulty,
+      estimatedDuration: goal.estimatedTime,
+      category: goal.category,
+      steps: steps,
+      goalId: goal._id,
+      skillLevel: skillLevel
+    };
+
+    res.status(200).json({
+      success: true,
+      data: roadmapPreview
+    });
+  } catch (error) {
+    console.error('Error generating roadmap preview:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+      error: error.message
+    });
+  }
+};
+
+// Helper function to generate steps based on goal and skill level
+function generateStepsForGoal(goal, skillLevel) {
+  const baseSteps = [
+    {
+      title: `${goal.name} Fundamentals`,
+      description: `Learn the foundational concepts of ${goal.name}`,
+      duration: '2 weeks',
+      skills: ['Basic concepts', 'Core principles', 'Industry standards'],
+      order: 1
+    },
+    {
+      title: 'Core Technologies',
+      description: `Master the essential technologies used in ${goal.name}`,
+      duration: '4 weeks',
+      skills: ['Technology stack', 'Tools and frameworks', 'Development environment'],
+      order: 2
+    },
+    {
+      title: 'Intermediate Concepts',
+      description: `Dive deeper into ${goal.name} techniques and best practices`,
+      duration: '4 weeks',
+      skills: ['Advanced concepts', 'Design patterns', 'Best practices'],
+      order: 3
+    },
+    {
+      title: 'Hands-on Projects',
+      description: 'Build real-world projects to solidify your skills',
+      duration: '6 weeks',
+      skills: ['Project development', 'Problem solving', 'Debugging'],
+      order: 4
+    },
+    {
+      title: 'Advanced Topics',
+      description: 'Master advanced concepts and techniques',
+      duration: '4 weeks',
+      skills: ['Expert techniques', 'Performance optimization', 'Scalability'],
+      order: 5
+    },
+    {
+      title: 'Capstone Project',
+      description: 'Create a comprehensive project showcasing your skills',
+      duration: '4 weeks',
+      skills: ['Full implementation', 'Portfolio piece', 'Professional showcase'],
+      order: 6
+    }
+  ];
+
+  // Adjust steps based on skill level
+  if (skillLevel === 'intermediate') {
+    return baseSteps.slice(1).map((step, index) => ({ ...step, order: index + 1 }));
+  } else if (skillLevel === 'advanced') {
+    return baseSteps.slice(2).map((step, index) => ({ ...step, order: index + 1 }));
+  }
+
+  return baseSteps;
+}
+
+// @desc    Save generated roadmap to user's account
+// @route   POST /api/roadmaps/save
+// @access  Private
+exports.saveGeneratedRoadmap = async (req, res) => {
+  try {
+    const {
+      goalId,
+      skillLevel,
+      title,
+      description,
+      difficulty,
+      estimatedDuration,
+      category,
+      steps
+    } = req.body;
+
+    // Validate required fields
+    if (!goalId || !skillLevel || !title || !difficulty || !estimatedDuration || !category || !steps) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide all required fields'
+      });
+    }
+
+    // Verify goal exists
+    const goal = await Goal.findById(goalId);
+    if (!goal) {
+      return res.status(404).json({
+        success: false,
+        message: 'Goal not found'
+      });
+    }
+
+    // Check if user already has a roadmap for this goal
+    const existingRoadmap = await Roadmap.findOne({
+      userId: req.user.id,
+      goalId: goalId
+    });
+
+    if (existingRoadmap) {
+      return res.status(400).json({
+        success: false,
+        message: 'You already have a roadmap for this goal. Please complete or delete the existing one first.'
+      });
+    }
+
+    // Create the roadmap
+    const roadmap = await Roadmap.create({
+      title,
+      description,
+      goalId,
+      userId: req.user.id,
+      difficulty,
+      estimatedDuration,
+      category,
+      steps: steps.map((step, index) => ({
+        ...step,
+        order: step.order || index + 1,
+        completed: false
+      })),
+      tags: goal.tags || [],
+      skillsRequired: goal.skillsRequired || [],
+      skillsLearned: goal.skillsLearned || [],
+      status: 'not_started'
+    });
+
+    // Create initial user progress
+    const userProgress = await UserProgress.create({
+      userId: req.user.id,
+      roadmapId: roadmap._id,
+      goalId: goalId,
+      stepProgress: roadmap.steps.map(step => ({
+        stepId: step._id,
+        completed: false,
+        timeSpent: 0
+      })),
+      status: 'not_started'
+    });
+
+    // Create activity log
+    await Activity.createActivity({
+      userId: req.user.id,
+      type: 'roadmap_started',
+      title: `Started roadmap: ${title}`,
+      description: `New ${difficulty} level roadmap for ${goal.name} (${skillLevel} level)`,
+      metadata: {
+        roadmapId: roadmap._id,
+        goalId: goalId,
+        skillLevel: skillLevel
+      },
+      icon: 'map',
+      color: 'blue'
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        roadmap,
+        userProgress
+      }
+    });
+  } catch (error) {
+    console.error('Error saving roadmap:', error);
+
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation Error',
+        errors: messages
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Server Error',
@@ -408,7 +645,7 @@ exports.getUserRoadmaps = async (req, res) => {
   try {
     const { userId } = req.params;
     const { status, page = 1, limit = 10 } = req.query;
-    
+
     // Check if user is requesting their own roadmaps or is admin
     if (req.user && (userId !== req.user.id && req.user.role !== 'admin')) {
       return res.status(403).json({
@@ -416,21 +653,21 @@ exports.getUserRoadmaps = async (req, res) => {
         message: 'Not authorized to view these roadmaps'
       });
     }
-    
+
     let query = { userId: userId };
-    
+
     if (status && status !== 'all') {
       query.status = status;
     }
-    
+
     const roadmaps = await Roadmap.find(query)
       .populate('goalId', 'name category')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
-    
+
     const total = await Roadmap.countDocuments(query);
-    
+
     res.status(200).json({
       success: true,
       count: roadmaps.length,

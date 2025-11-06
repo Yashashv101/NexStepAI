@@ -7,27 +7,27 @@ const getErrorMessage = (error) => {
   if (error.response?.data?.message) {
     return error.response.data.message;
   }
-  
+
   if (error.response?.status === 400) {
     return 'Invalid data provided. Please check your inputs and try again.';
   }
-  
+
   if (error.response?.status === 401) {
     return 'You are not authorized to perform this action. Please log in and try again.';
   }
-  
+
   if (error.response?.status === 403) {
     return 'You do not have permission to perform this action.';
   }
-  
+
   if (error.response?.status === 404) {
     return 'The requested resource was not found.';
   }
-  
+
   if (error.response?.status >= 500) {
     return 'A server error occurred. Please try again later.';
   }
-  
+
   return 'An unexpected error occurred. Please try again.';
 };
 
@@ -210,7 +210,7 @@ export const updateStepProgress = async (roadmapId, stepId, progressData) => {
 
 export const resetProgress = async (roadmapId) => {
   try {
-    const response = await api.delete(`/progress/${roadmapId}/reset`);
+    const response = await api.put(`/progress/${roadmapId}/reset`);
     return response.data;
   } catch (error) {
     console.error('Error resetting progress:', error);
@@ -248,7 +248,7 @@ export const createGoal = async (goalData) => {
       difficulty: goalData.difficulty,
       timestamp: new Date().toISOString()
     });
-    
+
     const response = await api.post('/goals', goalData);
     console.log('Goal created successfully:', response.data);
     return response.data;
@@ -261,14 +261,14 @@ export const createGoal = async (goalData) => {
       data: error.response?.data,
       timestamp: new Date().toISOString()
     };
-    
+
     console.error('Error creating goal:', errorDetails);
-    
+
     // Provide more specific error messages based on error type
     if (error.response?.data?.validationDetails) {
       console.error('Validation error details:', error.response.data.validationDetails);
     }
-    
+
     throw {
       ...error,
       friendlyMessage: getErrorMessage(error),
@@ -358,6 +358,29 @@ export const deleteRoadmap = async (id) => {
   }
 };
 
+export const generateRoadmapPreview = async (goalId, skillLevel) => {
+  try {
+    const response = await api.post('/roadmaps/generate-preview', {
+      goalId,
+      skillLevel
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error generating roadmap preview:', error);
+    throw error;
+  }
+};
+
+export const saveGeneratedRoadmap = async (roadmapData) => {
+  try {
+    const response = await api.post('/roadmaps/save', roadmapData);
+    return response.data;
+  } catch (error) {
+    console.error('Error saving roadmap:', error);
+    throw error;
+  }
+};
+
 // Resource API calls
 export const getResources = async (params = {}) => {
   try {
@@ -412,8 +435,8 @@ export const deleteResource = async (id) => {
 // Analytics API calls
 export const getAnalyticsDashboard = async (timeRange = '30d') => {
   try {
-    const response = await api.get('/analytics/dashboard', { 
-      params: { timeRange } 
+    const response = await api.get('/analytics/dashboard', {
+      params: { timeRange }
     });
     return response.data;
   } catch (error) {
@@ -428,6 +451,98 @@ export const getAdminStats = async () => {
     return response.data;
   } catch (error) {
     console.error('Error fetching admin stats:', error);
+    throw error;
+  }
+};
+
+// AI Roadmap Generation API calls
+export const enhanceUserGoal = async (goalText) => {
+  try {
+    const response = await api.post('/ai/enhance-goal', { goalText });
+    return response.data;
+  } catch (error) {
+    console.error('Error enhancing goal:', error);
+    throw error;
+  }
+};
+
+export const createUserGoal = async (goalData) => {
+  try {
+    const response = await api.post('/ai/create-user-goal', goalData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating user goal:', error);
+    throw error;
+  }
+};
+
+export const generateAIRoadmap = async (goalId, userContext = {}) => {
+  try {
+    const response = await api.post('/ai/generate-roadmap', { goalId, userContext });
+    return response.data;
+  } catch (error) {
+    console.error('Error generating AI roadmap:', error);
+    throw error;
+  }
+};
+
+export const saveAIRoadmap = async (roadmapData) => {
+  try {
+    const response = await api.post('/ai/save-roadmap', roadmapData);
+    return response.data;
+  } catch (error) {
+    console.error('Error saving AI roadmap:', error);
+    throw error;
+  }
+};
+
+export const getUserAIStats = async () => {
+  try {
+    const response = await api.get('/ai/user-stats');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user AI stats:', error);
+    throw error;
+  }
+};
+
+// Admin AI Management API calls
+export const getAllAIRoadmaps = async (params = {}) => {
+  try {
+    const response = await api.get('/ai/admin/roadmaps', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching AI roadmaps:', error);
+    throw error;
+  }
+};
+
+export const getAllUserGoals = async (params = {}) => {
+  try {
+    const response = await api.get('/ai/admin/user-goals', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user goals:', error);
+    throw error;
+  }
+};
+
+export const moderateRoadmap = async (roadmapId, moderationData) => {
+  try {
+    const response = await api.put(`/ai/admin/moderate-roadmap/${roadmapId}`, moderationData);
+    return response.data;
+  } catch (error) {
+    console.error('Error moderating roadmap:', error);
+    throw error;
+  }
+};
+
+export const moderateGoalItem = async (goalId, moderationData) => {
+  try {
+    const response = await api.put(`/ai/admin/moderate-goal/${goalId}`, moderationData);
+    return response.data;
+  } catch (error) {
+    console.error('Error moderating goal:', error);
     throw error;
   }
 };

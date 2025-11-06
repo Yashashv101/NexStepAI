@@ -117,6 +117,43 @@ const RoadmapSchema = new mongoose.Schema({
       default: 0
     }
   },
+  // AI Generation tracking
+  isAIGenerated: {
+    type: Boolean,
+    default: false
+  },
+  aiMetadata: {
+    service: {
+      type: String,
+      enum: ['gemini', 'manual'],
+      default: 'manual'
+    },
+    model: {
+      type: String
+    },
+    generatedAt: {
+      type: Date
+    },
+    prompt: {
+      type: String
+    }
+  },
+  // Admin moderation
+  moderationStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected', 'flagged'],
+    default: 'approved'
+  },
+  moderationNotes: {
+    type: String
+  },
+  moderatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  moderatedAt: {
+    type: Date
+  },
   createdAt: {
     type: Date,
     default: Date.now

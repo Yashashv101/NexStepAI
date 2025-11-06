@@ -12,7 +12,8 @@ import {
   X,
   Users,
   BookOpen,
-  BarChart3
+  BarChart3,
+  Sparkles
 } from 'lucide-react';
 
 const RoleBasedNavbar = () => {
@@ -41,6 +42,7 @@ const RoleBasedNavbar = () => {
     } else {
       return [
         { name: 'Dashboard', href: '/dashboard', icon: Home },
+        { name: 'AI Roadmap', href: '/user/ai-roadmap', icon: Sparkles },
         { name: 'My Roadmaps', href: '/user/roadmaps', icon: Map },
         { name: 'Goals', href: '/goal-selection', icon: Target },
         { name: 'Profile', href: '/user/profile', icon: User },

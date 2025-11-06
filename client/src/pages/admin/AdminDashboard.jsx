@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Users, 
@@ -12,6 +12,7 @@ import {
   Loader
 } from 'lucide-react';
 import { getAdminStats } from '../../services/api';
+import { subscribeAdminDataChanged } from '../../utils/adminEvents';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -26,6 +27,30 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchAdminStats();
+    // Subscribe to admin data change events and refetch with debounce
+    const debounceRef = { timer: null };
+    const unsubscribe = subscribeAdminDataChanged(() => {
+      if (debounceRef.timer) {
+        clearTimeout(debounceRef.timer);
+      }
+      debounceRef.timer = setTimeout(() => {
+        fetchAdminStats();
+      }, 300);
+    });
+
+    // Refetch when tab becomes visible
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchAdminStats();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      unsubscribe();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (debounceRef.timer) clearTimeout(debounceRef.timer);
+    };
   }, []);
 
   const fetchAdminStats = async () => {
@@ -33,7 +58,9 @@ const AdminDashboard = () => {
       setLoading(true);
       setError(null);
       const response = await getAdminStats();
-      setStats(response.data);
+      // Support both envelope { data: {...} } and direct stats
+      const nextStats = response?.data?.data ?? response?.data ?? response;
+      setStats(nextStats);
     } catch (err) {
       console.error('Error fetching admin stats:', err);
       setError('Failed to load admin statistics. Please try again.');

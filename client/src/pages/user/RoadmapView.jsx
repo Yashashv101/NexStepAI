@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Map, 
-  Target, 
-  Clock, 
-  CheckCircle, 
-  Circle, 
-  Play,
-  Pause,
+import {
+  Map,
+  Target,
+  Clock,
+  CheckCircle,
   RotateCcw,
   Calendar,
   TrendingUp,
@@ -36,7 +33,7 @@ const RoadmapView = () => {
       // Try to get cached data first
       const cacheKey = 'user-roadmaps';
       const cachedData = cacheService.get(cacheKey);
-      
+
       if (cachedData) {
         setRoadmaps(cachedData);
         if (cachedData.length > 0) {
@@ -54,7 +51,7 @@ const RoadmapView = () => {
             try {
               const progressResponse = await getUserProgress(roadmap._id);
               const progress = progressResponse.success ? progressResponse.data : null;
-              
+
               return {
                 ...roadmap,
                 progress: progress,
@@ -87,8 +84,8 @@ const RoadmapView = () => {
       }
     } catch (error) {
       console.error('Error fetching roadmaps:', error);
-      setError(error.message || 'Failed to load roadmaps');
-      
+      setError('Failed to load roadmaps');
+
       // If we have cached data, show it with error message
       const cacheKey = 'user-roadmaps';
       const cachedData = cacheService.get(cacheKey);
@@ -107,7 +104,7 @@ const RoadmapView = () => {
     try {
       const cacheKey = `user-progress-${roadmapId}`;
       const cachedProgress = cacheService.get(cacheKey);
-      
+
       if (cachedProgress) {
         setUserProgress(prev => ({ ...prev, [roadmapId]: cachedProgress }));
       }
@@ -122,20 +119,20 @@ const RoadmapView = () => {
     }
   };
 
-  const toggleStepCompletion = async (stepId) => {
+  const handleMarkStepCompleted = async (stepId) => {
     if (!selectedRoadmap) return;
 
     try {
       setUpdatingStep(stepId);
-      
+
       const step = selectedRoadmap.steps.find(s => s._id === stepId);
       if (!step) return;
 
       const newCompletedStatus = !step.completed;
-      
+
       // Optimistically update UI
       const updatedSteps = selectedRoadmap.steps.map(step =>
-        step._id === stepId ? { ...step, completed: newCompletedStatus } : step
+        step._id === stepId ? { ...step, completed: newCompletedStatus, completedAt: newCompletedStatus ? new Date() : null } : step
       );
 
       const updatedRoadmap = { ...selectedRoadmap, steps: updatedSteps };
@@ -156,7 +153,7 @@ const RoadmapView = () => {
         // Invalidate cache
         cacheService.delete('user-roadmaps');
         cacheService.delete(`user-progress-${selectedRoadmap._id}`);
-        
+
         // Update progress data
         setUserProgress(prev => ({ ...prev, [selectedRoadmap._id]: response.data }));
       } else {
@@ -164,7 +161,7 @@ const RoadmapView = () => {
       }
     } catch (error) {
       console.error('Error updating step completion:', error);
-      
+
       // Revert optimistic update on error
       const revertedSteps = selectedRoadmap.steps.map(step =>
         step._id === stepId ? { ...step, completed: !step.completed } : step
@@ -176,7 +173,7 @@ const RoadmapView = () => {
       setRoadmaps(roadmaps.map(roadmap =>
         roadmap._id === selectedRoadmap._id ? revertedRoadmap : roadmap
       ));
-      
+
       setError('Failed to update step progress. Please try again.');
     } finally {
       setUpdatingStep(null);
@@ -190,13 +187,13 @@ const RoadmapView = () => {
 
     try {
       setLoading(true);
-      
+
       const response = await resetProgress(selectedRoadmap._id);
       if (response.success) {
         // Invalidate cache and refresh data
         cacheService.delete('user-roadmaps');
         cacheService.delete(`user-progress-${selectedRoadmap._id}`);
-        
+
         await fetchUserRoadmaps();
       } else {
         throw new Error(response.message || 'Failed to reset progress');
@@ -219,12 +216,14 @@ const RoadmapView = () => {
   };
 
   const getProgressPercentage = (steps) => {
+    if (!steps || steps.length === 0) return 0;
     const completedSteps = steps.filter(step => step.completed).length;
     return Math.round((completedSteps / steps.length) * 100);
   };
 
   const getTotalTimeSpent = (steps) => {
-    return steps.reduce((total, step) => total + step.timeSpent, 0);
+    if (!steps || steps.length === 0) return 0;
+    return steps.reduce((total, step) => total + (step.timeSpent || 0), 0);
   };
 
   if (loading) {
@@ -245,7 +244,7 @@ const RoadmapView = () => {
           <AlertCircle className="mx-auto h-12 w-12 text-red-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">Error loading roadmaps</h3>
           <p className="mt-1 text-sm text-gray-500">{error}</p>
-          <button 
+          <button
             onClick={fetchUserRoadmaps}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
@@ -263,7 +262,7 @@ const RoadmapView = () => {
           <Map className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No roadmaps found</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Start your learning journey by selecting a goal and roadmap.
+            Start your learning journey by selecting a goal and generating a roadmap.
           </p>
         </div>
       </div>
@@ -280,14 +279,14 @@ const RoadmapView = () => {
             My Learning Roadmaps
           </h1>
           <p className="text-gray-600 mt-2">Track your progress and continue your learning journey</p>
-          
+
           {/* Error Banner */}
           {error && (
             <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center">
                 <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
                 <p className="text-sm text-red-700">{error}</p>
-                <button 
+                <button
                   onClick={() => setError(null)}
                   className="ml-auto text-red-400 hover:text-red-600"
                 >
@@ -307,11 +306,10 @@ const RoadmapView = () => {
                 <div
                   key={roadmap._id}
                   onClick={() => setSelectedRoadmap(roadmap)}
-                  className={`bg-white rounded-lg shadow-md p-4 cursor-pointer transition-all ${
-                    selectedRoadmap?._id === roadmap._id 
-                      ? 'ring-2 ring-blue-500 border-blue-500' 
-                      : 'hover:shadow-lg'
-                  }`}
+                  className={`bg-white rounded-lg shadow-md p-4 cursor-pointer transition-all ${selectedRoadmap?._id === roadmap._id
+                    ? 'ring-2 ring-blue-500 border-blue-500'
+                    : 'hover:shadow-lg'
+                    }`}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-semibold text-gray-900 text-sm">{roadmap.title}</h3>
@@ -429,52 +427,76 @@ const RoadmapView = () => {
                   </div>
                 </div>
 
-                {/* Learning Steps */}
+                {/* Learning Steps - All Steps Shown */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Learning Steps</h3>
                   <div className="space-y-3">
                     {selectedRoadmap.steps.map((step, index) => (
                       <div
                         key={step._id}
-                        className={`flex items-center p-4 rounded-lg border-2 transition-all ${
-                          step.completed 
-                            ? 'bg-green-50 border-green-200' 
-                            : 'bg-gray-50 border-gray-200 hover:border-blue-300'
-                        }`}
+                        className={`p-4 rounded-lg border-2 transition-all ${step.completed
+                          ? 'bg-green-50 border-green-200'
+                          : 'bg-gray-50 border-gray-200'
+                          }`}
                       >
-                        <button
-                          onClick={() => toggleStepCompletion(step._id)}
-                          disabled={updatingStep === step._id}
-                          className="mr-4 focus:outline-none disabled:opacity-50"
-                        >
-                          {updatingStep === step._id ? (
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                          ) : step.completed ? (
-                            <CheckCircle className="h-6 w-6 text-green-600" />
-                          ) : (
-                            <Circle className="h-6 w-6 text-gray-400 hover:text-blue-600" />
-                          )}
-                        </button>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span className="text-sm font-medium text-gray-500 mr-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`text-sm font-medium px-2 py-1 rounded ${step.completed ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'
+                                }`}>
                                 Step {index + 1}
                               </span>
-                              <h4 className={`font-medium ${
-                                step.completed ? 'text-green-800 line-through' : 'text-gray-900'
-                              }`}>
+                              <h4 className={`font-semibold ${step.completed ? 'text-green-800' : 'text-gray-900'
+                                }`}>
                                 {step.title}
                               </h4>
-                              {step.description && (
-                                <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+                              {step.completed && (
+                                <CheckCircle className="h-5 w-5 text-green-600" />
                               )}
                             </div>
+                            {step.description && (
+                              <p className="text-sm text-gray-600 mb-2">{step.description}</p>
+                            )}
+                            {step.skills && step.skills.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                {step.skills.map((skill, skillIndex) => (
+                                  <span
+                                    key={skillIndex}
+                                    className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded"
+                                  >
+                                    {skill}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             <div className="flex items-center text-sm text-gray-500">
                               <Clock className="h-4 w-4 mr-1" />
-                              {step.timeSpent}h
+                              Duration: {step.duration}
                             </div>
+                          </div>
+                          <div className="ml-4">
+                            <button
+                              onClick={() => handleMarkStepCompleted(step._id)}
+                              disabled={updatingStep === step._id || step.completed}
+                              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center ${step.completed
+                                ? 'bg-green-100 text-green-800 cursor-not-allowed'
+                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                } disabled:opacity-50`}
+                            >
+                              {updatingStep === step._id ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                  Updating...
+                                </>
+                              ) : step.completed ? (
+                                <>
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Completed
+                                </>
+                              ) : (
+                                'Mark Complete'
+                              )}
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -493,15 +515,15 @@ const RoadmapView = () => {
                     })}
                   </div>
                   <div className="flex space-x-3">
-                    <button 
+                    <button
                       onClick={handleResetProgress}
                       disabled={loading}
-                      className="flex items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                      className="flex items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
                     >
                       <RotateCcw className="h-4 w-4 mr-2" />
                       Reset Progress
                     </button>
-                    <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                       <BookOpen className="h-4 w-4 mr-2" />
                       Continue Learning
                     </button>

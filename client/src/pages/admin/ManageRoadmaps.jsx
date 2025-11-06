@@ -20,6 +20,7 @@ import {
   deleteRoadmap,
   getGoals 
 } from '../../services/api';
+import { emitAdminDataChanged } from '../../utils/adminEvents';
 
 const ManageRoadmaps = () => {
   const [roadmaps, setRoadmaps] = useState([]);
@@ -30,6 +31,8 @@ const ManageRoadmaps = () => {
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingRoadmap, setEditingRoadmap] = useState(null);
+  const [filterType, setFilterType] = useState('all'); // 'all', 'manual', 'ai'
+  const [moderationFilter, setModerationFilter] = useState('all');
   const [newRoadmap, setNewRoadmap] = useState({
     title: '',
     description: '',
@@ -109,7 +112,7 @@ const ManageRoadmaps = () => {
         (goals.find(goal => goal._id === roadmap.goalId)?.name || '') : 
         '';
       
-      return (
+      const matchesSearch = (
         (roadmap.title && roadmap.title.toLowerCase().includes(searchLower)) ||
         (roadmap.description && roadmap.description.toLowerCase().includes(searchLower)) ||
         goalName.toLowerCase().includes(searchLower) ||
@@ -117,9 +120,22 @@ const ManageRoadmaps = () => {
           tag && tag.toLowerCase().includes(searchLower)
         ))
       );
+      
+      // Type filter
+      const matchesType = 
+        filterType === 'all' ||
+        (filterType === 'ai' && roadmap.isAIGenerated) ||
+        (filterType === 'manual' && !roadmap.isAIGenerated);
+      
+      // Moderation filter
+      const matchesModeration = 
+        moderationFilter === 'all' ||
+        (roadmap.moderationStatus === moderationFilter);
+      
+      return matchesSearch && matchesType && matchesModeration;
     });
     setFilteredRoadmaps(filtered);
-  }, [roadmaps, searchTerm, goals]);
+  }, [roadmaps, searchTerm, goals, filterType, moderationFilter]);
 
   const handleCreateRoadmap = async (e) => {
     e.preventDefault();
@@ -195,6 +211,10 @@ const ManageRoadmaps = () => {
         setError('');
         await deleteRoadmap(roadmapId);
         setRoadmaps(roadmaps.filter(roadmap => roadmap._id !== roadmapId));
+        // Notify Admin Dashboard to refresh stats
+        emitAdminDataChanged({ type: 'roadmap', action: 'deleted', countDelta: -1 });
+        // Visual confirmation
+        alert('Roadmap has been deleted successfully.');
       } catch (error) {
         console.error('Error deleting roadmap:', error);
         setError('Failed to delete roadmap. Please try again.');
@@ -394,15 +414,47 @@ const ManageRoadmaps = () => {
         )}
 
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="Search roadmaps by title, description, or goal..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search roadmaps by title, description, or goal..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex space-x-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Generation Type</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                >
+                  <option value="all">All Roadmaps</option>
+                  <option value="manual">Manual Created</option>
+                  <option value="ai">AI Generated</option>
+                </select>
+              </div>
+              
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Moderation Status</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={moderationFilter}
+                  onChange={(e) => setModerationFilter(e.target.value)}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="approved">Approved</option>
+                  <option value="pending">Pending</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="flagged">Flagged</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -415,12 +467,35 @@ const ManageRoadmaps = () => {
               return (
                 <div key={roadmap._id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
                   <div className="flex justify-between items-start mb-4">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900">{roadmap.title}</h3>
                       <div className="flex items-center text-sm text-gray-500 mt-1">
                         <Target className="h-4 w-4 mr-1" />
                         {goalName}
                       </div>
+                      
+                      {roadmap.isAIGenerated && (
+                        <div className="flex items-center mt-2 space-x-2">
+                          <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-semibold">
+                            AI Generated
+                          </span>
+                          {roadmap.aiMetadata?.service && (
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                              {roadmap.aiMetadata.service}
+                            </span>
+                          )}
+                          {roadmap.moderationStatus && (
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              roadmap.moderationStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                              roadmap.moderationStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              roadmap.moderationStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-orange-100 text-orange-800'
+                            }`}>
+                              {roadmap.moderationStatus}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex space-x-2">
                       <button

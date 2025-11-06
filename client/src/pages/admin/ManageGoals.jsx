@@ -18,6 +18,7 @@ import {
   deleteGoal, 
   getGoalCategories 
 } from '../../services/api';
+import { emitAdminDataChanged } from '../../utils/adminEvents';
 
 const ManageGoals = () => {
   const [goals, setGoals] = useState([]);
@@ -27,6 +28,8 @@ const ManageGoals = () => {
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
+  const [filterType, setFilterType] = useState('all'); // 'all', 'admin', 'user'
+  const [moderationFilter, setModerationFilter] = useState('all'); // 'all', 'pending', 'approved', 'rejected'
   const [newGoal, setNewGoal] = useState({
     name: '',
     description: '',
@@ -76,14 +79,31 @@ const ManageGoals = () => {
       return;
     }
     
-    const filtered = goals.filter(goal =>
-      goal && goal.name && goal.description && goal.category &&
-      (goal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       goal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       goal.category.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const filtered = goals.filter(goal => {
+      if (!goal || !goal.name || !goal.description || !goal.category) return false;
+      
+      // Search filter
+      const matchesSearch = 
+        goal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        goal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        goal.category.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Type filter
+      const matchesType = 
+        filterType === 'all' ||
+        (filterType === 'user' && goal.isUserSubmitted) ||
+        (filterType === 'admin' && !goal.isUserSubmitted);
+      
+      // Moderation filter
+      const matchesModeration = 
+        moderationFilter === 'all' ||
+        (goal.moderationStatus === moderationFilter);
+      
+      return matchesSearch && matchesType && matchesModeration;
+    });
+    
     setFilteredGoals(filtered);
-  }, [goals, searchTerm]);
+  }, [goals, searchTerm, filterType, moderationFilter]);
 
   const handleCreateGoal = async (e) => {
     e.preventDefault();
@@ -169,6 +189,8 @@ const ManageGoals = () => {
         setError(null);
         await deleteGoal(goalId);
         await fetchGoals();
+        // Notify Admin Dashboard to refresh stats
+        emitAdminDataChanged({ type: 'goal', action: 'deleted', countDelta: -1 });
         
         // Show success message
         alert(`Goal "${goalName}" and all associated records have been successfully deleted.`);
@@ -266,17 +288,49 @@ const ManageGoals = () => {
           </div>
         )}
 
-        {/* Search */}
+        {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="Search goals by name, description, or category..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search goals by name, description, or category..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex space-x-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                >
+                  <option value="all">All Goals</option>
+                  <option value="admin">Admin Created</option>
+                  <option value="user">User Submitted</option>
+                </select>
+              </div>
+              
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Moderation Status</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={moderationFilter}
+                  onChange={(e) => setModerationFilter(e.target.value)}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="approved">Approved</option>
+                  <option value="pending">Pending</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="flagged">Flagged</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -331,6 +385,31 @@ const ManageGoals = () => {
                   <span className="text-sm font-medium">{goal.estimatedTime}</span>
                 </div>
               </div>
+              
+              {goal.isUserSubmitted && (
+                <div className="mb-4 space-y-2">
+                  <div className="flex items-center">
+                    <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-semibold">
+                      User Submitted
+                    </span>
+                    {goal.isAIEnhanced && (
+                      <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold">
+                        AI Enhanced
+                      </span>
+                    )}
+                  </div>
+                  {goal.moderationStatus && (
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      goal.moderationStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                      goal.moderationStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      goal.moderationStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                      'bg-orange-100 text-orange-800'
+                    }`}>
+                      {goal.moderationStatus}
+                    </span>
+                  )}
+                </div>
+              )}
               
               <div className="flex justify-between items-center pt-4 border-t border-gray-200">
                 <div className="flex items-center text-sm text-gray-500">

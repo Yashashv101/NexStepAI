@@ -1,12 +1,14 @@
 const express = require('express');
-const { 
-  getRoadmaps, 
+const {
+  getRoadmaps,
   getRoadmap,
-  createRoadmap, 
+  createRoadmap,
   updateRoadmap,
   deleteRoadmap,
   updateStepCompletion,
-  getUserRoadmaps
+  getUserRoadmaps,
+  generateRoadmapPreview,
+  saveGeneratedRoadmap
 } = require('../controllers/roadmapController');
 const auth = require('../middleware/authMiddleware');
 const roleAuth = require('../middleware/roleAuth');
@@ -17,6 +19,8 @@ const router = express.Router();
 router.route('/').get(getRoadmaps);
 
 // User routes (authenticated) - MUST come before /:id route
+router.route('/generate-preview').post(auth, generateRoadmapPreview);
+router.route('/save').post(auth, saveGeneratedRoadmap);
 router.route('/user').get(auth, (req, res) => {
   // Use the authenticated user's ID
   req.params.userId = req.user.id;
