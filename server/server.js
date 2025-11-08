@@ -23,11 +23,8 @@ const userRoutes = require('./routes/userRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const aiRoadmapRoutes = require('./routes/aiRoadmapRoutes');
 
-// Placeholder for routes that will be implemented later
-const placeholderRouter = express.Router();
-placeholderRouter.get('/', (req, res) => {
-  res.status(200).json({ message: 'This endpoint is under development' });
-});
+// Resume routes
+const resumeRoutes = require('./routes/resumeRoutes');
 
 const app = express();
 
@@ -52,12 +49,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ai', aiRoadmapRoutes);
-app.use('/api/resumes', placeholderRouter);
-app.use('/api/skillgaps', placeholderRouter);
+app.use('/api/resumes', resumeRoutes);
 
 // Error handler middleware
-// Commented out until errorHandler is properly implemented
-// app.use(errorHandler);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 

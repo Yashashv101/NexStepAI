@@ -486,9 +486,10 @@ export const generateAIRoadmap = async (goalId, userContext = {}) => {
   }
 };
 
-export const saveAIRoadmap = async (roadmapData) => {
+export const saveAIRoadmap = async (goalId, roadmapData, aiService = 'gemini', aiModel = 'unknown') => {
   try {
-    const response = await api.post('/ai/save-roadmap', roadmapData);
+    const payload = { goalId, roadmapData, aiService, aiModel };
+    const response = await api.post('/ai/save-roadmap', payload);
     return response.data;
   } catch (error) {
     console.error('Error saving AI roadmap:', error);
@@ -543,6 +544,36 @@ export const moderateGoalItem = async (goalId, moderationData) => {
     return response.data;
   } catch (error) {
     console.error('Error moderating goal:', error);
+    throw error;
+  }
+};
+
+// Resume Analyzer API
+export const analyzeResume = async (file, requirementsText = '', requirements = []) => {
+  try {
+    const formData = new FormData();
+    formData.append('resume', file);
+    if (requirementsText) formData.append('requirementsText', requirementsText);
+    if (Array.isArray(requirements) && requirements.length) {
+      formData.append('requirements', JSON.stringify(requirements));
+    }
+    const response = await api.post('/resumes/analyze', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error analyzing resume:', error);
+    throw error;
+  }
+};
+
+// Generate AI roadmap from parsed resume and selected target position
+export const generateResumeRoadmap = async (payload) => {
+  try {
+    const response = await api.post('/resumes/roadmap', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error generating resume-based roadmap:', error);
     throw error;
   }
 };

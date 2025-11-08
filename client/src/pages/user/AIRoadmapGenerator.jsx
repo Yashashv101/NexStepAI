@@ -135,8 +135,8 @@ const AIRoadmapGenerator = () => {
       // Preserve aiService and aiModel alongside roadmap data
       setGeneratedRoadmap({
         ...response.data,
-        aiService: response.aiService,
-        aiModel: response.aiModel
+        aiService: response.data?.aiService,
+        aiModel: response.data?.aiModel
       });
       setSelectedGoalId(goalId);
       setCurrentStep(4);
@@ -161,12 +161,17 @@ const AIRoadmapGenerator = () => {
     setError('');
 
     try {
-      const response = await saveAIRoadmap({
-        goalId: selectedGoalId,
-        roadmapData: generatedRoadmap.roadmap,
-        aiService: generatedRoadmap.aiService || 'gemini',
-        aiModel: generatedRoadmap.aiModel || 'unknown'
-      });
+      if (!generatedRoadmap.roadmap?.steps || generatedRoadmap.roadmap.steps.length < 4) {
+        setError('Roadmap incomplete: please ensure at least 4 steps before saving.');
+        setLoading(false);
+        return;
+      }
+      const response = await saveAIRoadmap(
+        selectedGoalId,
+        generatedRoadmap.roadmap,
+        generatedRoadmap.aiService || 'gemini',
+        generatedRoadmap.aiModel || 'unknown'
+      );
 
       setSuccess('Roadmap saved successfully! Redirecting to your roadmaps...');
       setTimeout(() => {

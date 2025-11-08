@@ -13,6 +13,7 @@ import Dashboard from './pages/user/Dashboard';
 import Profile from './pages/user/Profile';
 import RoadmapView from './pages/user/RoadmapView';
 import AIRoadmapGenerator from './pages/user/AIRoadmapGenerator';
+import ResumeAnalyzer from './pages/user/ResumeAnalyzer';
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -71,6 +72,14 @@ function App() {
               element={
                 <RoleBasedRoute allowedRoles={['user']}>
                   <AIRoadmapGenerator />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="/user/resume-analyzer"
+              element={
+                <RoleBasedRoute allowedRoles={['user']}>
+                  <ResumeAnalyzer />
                 </RoleBasedRoute>
               }
             />

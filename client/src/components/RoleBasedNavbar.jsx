@@ -15,6 +15,7 @@ import {
   BarChart3,
   Sparkles
 } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 const RoleBasedNavbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -43,6 +44,7 @@ const RoleBasedNavbar = () => {
       return [
         { name: 'Dashboard', href: '/dashboard', icon: Home },
         { name: 'AI Roadmap', href: '/user/ai-roadmap', icon: Sparkles },
+        { name: 'Resume Analyzer', href: '/user/resume-analyzer', icon: FileText },
         { name: 'My Roadmaps', href: '/user/roadmaps', icon: Map },
         { name: 'Goals', href: '/goal-selection', icon: Target },
         { name: 'Profile', href: '/user/profile', icon: User },

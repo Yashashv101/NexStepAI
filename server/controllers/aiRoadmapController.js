@@ -286,10 +286,10 @@ exports.saveAIRoadmap = async (req, res) => {
     }
 
     // Validate roadmapData contains a minimum set of steps
-    if (!roadmapData.steps || !Array.isArray(roadmapData.steps) || roadmapData.steps.length < 6) {
+    if (!roadmapData.steps || !Array.isArray(roadmapData.steps) || roadmapData.steps.length < 4) {
       return res.status(400).json({
         success: false,
-        message: 'Roadmap generation incomplete: please ensure at least 6 steps before saving.'
+        message: 'Roadmap generation incomplete: please ensure at least 4 steps before saving.'
       });
     }
 

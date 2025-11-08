@@ -410,5 +410,164 @@ module.exports = {
     callGemini,
     generateRoadmap,
     enhanceGoal,
+    // Newly added functions will be exported below
 };
+
+/**
+ * Infer suitable job positions from a parsed resume using AI
+ * Returns structured positions with typical requirements and confidence.
+ */
+async function inferPositionsFromResume(parsedResume) {
+    const systemPrompt = `You are a job-matching assistant.
+
+Return ONLY valid JSON. Identify the top 3 most suitable job positions based on the candidate's resume.
+For each position, include typical requirements and a confidence score (0.0-1.0).
+`;
+
+    const userPrompt = `Candidate resume summary (normalized):
+Skills: ${JSON.stringify(parsedResume.skills || [])}
+Education: ${JSON.stringify(parsedResume.education || [])}
+Experience lines: ${JSON.stringify(parsedResume.experience || [])}
+Projects: ${JSON.stringify(parsedResume.projects || [])}
+
+Return JSON with this exact structure:
+{
+  "positions": [
+    {
+      "title": "string",
+      "typicalRequirements": {
+        "skills": ["string"],
+        "tools": ["string"],
+        "experienceYearsRange": "string",
+        "education": "string",
+        "certifications": ["string"]
+      },
+      "confidence": 0.0,
+      "rationale": "string"
+    }
+  ]
+}`;
+
+    const resp = await callAI(userPrompt, systemPrompt, { responseMimeType: 'application/json' });
+
+    let content = resp.content.trim().replace(/```json\s*/g, '').replace(/```\s*/g, '');
+    let data;
+    try {
+        data = JSON.parse(content);
+    } catch (e) {
+        throw new Error('Failed to parse AI positions JSON');
+    }
+
+    if (!data || !Array.isArray(data.positions)) {
+        throw new Error('AI did not return positions array');
+    }
+
+    return {
+        success: true,
+        positions: data.positions,
+        aiService: resp.service,
+        aiModel: resp.model,
+    };
+}
+
+/**
+ * Generate actionable insights to bridge gaps between current skills and target requirements.
+ */
+async function generateGapInsights(currentSkills = [], targetRequirements = {}) {
+    const systemPrompt = `You are a career coach. Provide concise, actionable guidance.
+Return ONLY valid JSON with an array of insights, each including action, why, and suggested resources.`;
+
+    const userPrompt = `Current skills: ${JSON.stringify(currentSkills)}
+Target requirements: ${JSON.stringify(targetRequirements)}
+
+Return JSON:
+{
+  "insights": [
+    { "action": "string", "why": "string", "resources": ["string"], "timeline": "string" }
+  ],
+  "confidence": 0.0
+}`;
+
+    const resp = await callAI(userPrompt, systemPrompt, { responseMimeType: 'application/json' });
+    let content = resp.content.trim().replace(/```json\s*/g, '').replace(/```\s*/g, '');
+    let data;
+    try {
+        data = JSON.parse(content);
+    } catch (e) {
+        throw new Error('Failed to parse AI insights JSON');
+    }
+
+    if (!data || !Array.isArray(data.insights)) {
+        throw new Error('AI did not return insights array');
+    }
+
+    return {
+        success: true,
+        insights: data.insights,
+        confidence: typeof data.confidence === 'number' ? data.confidence : 0.7,
+        aiService: resp.service,
+        aiModel: resp.model,
+    };
+}
+
+/**
+ * Generate a resume-based personalized roadmap using AI
+ * Includes milestones, learning paths, timeline suggestions, and resources.
+ */
+async function generateResumeRoadmap(parsedResume, targetPosition, targetRequirements = {}) {
+    const systemPrompt = `You are an expert curriculum designer.
+Return ONLY valid JSON. Personalize strictly to the candidate's resume and target position. Avoid generic advice.`;
+
+    const userPrompt = `Candidate resume:
+Skills: ${JSON.stringify(parsedResume.skills || [])}
+Education: ${JSON.stringify(parsedResume.education || [])}
+Experience: ${JSON.stringify(parsedResume.experience || [])}
+Projects: ${JSON.stringify(parsedResume.projects || [])}
+
+Target position: ${targetPosition}
+Target requirements: ${JSON.stringify(targetRequirements)}
+
+Return JSON with this structure:
+{
+  "title": "string",
+  "description": "string",
+  "estimatedDuration": "string",
+  "difficulty": "string",
+  "steps": [
+    { "title": "string", "description": "string", "duration": "string", "skills": ["string"], "order": 1 }
+  ],
+  "skillsRequired": ["string"],
+  "skillsLearned": ["string"],
+  "tags": ["string"],
+  "confidence": 0.0,
+  "personalizationScore": 0.0
+}`;
+
+    const response = await callAI(userPrompt, systemPrompt, { responseMimeType: 'application/json' });
+    let content = response.content.trim().replace(/```json\s*/g, '').replace(/```\s*/g, '');
+    let roadmap;
+    try {
+        roadmap = JSON.parse(content);
+    } catch (e) {
+        throw new Error('Failed to parse AI roadmap JSON');
+    }
+
+    if (!roadmap || !Array.isArray(roadmap.steps)) {
+        throw new Error('AI roadmap missing required steps');
+    }
+
+    // Ensure step ordering
+    roadmap.steps = roadmap.steps.map((s, i) => ({ ...s, order: s.order || i + 1 }));
+
+    return {
+        success: true,
+        roadmap,
+        aiService: response.service,
+        aiModel: response.model,
+    };
+}
+
+module.exports.inferPositionsFromResume = inferPositionsFromResume;
+module.exports.generateGapInsights = generateGapInsights;
+module.exports.generateResumeRoadmap = generateResumeRoadmap;
 
