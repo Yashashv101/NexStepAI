@@ -18,7 +18,8 @@ const ActivitySchema = new mongoose.Schema({
       'resource_accessed',
       'profile_updated',
       'login',
-      'registration'
+      'registration',
+      'user_deleted'
     ]
   },
   title: {

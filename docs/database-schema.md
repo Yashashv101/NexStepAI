@@ -255,15 +255,7 @@ db.goals.aggregate([
 ])
 ```
 
-### Active Users (Last 30 Days)
-```javascript
-// Users active in the last 30 days
-db.activities.distinct("userId", {
-  createdAt: {
-    $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  }
-})
-```
+
 
 ### Average Completion Time
 ```javascript

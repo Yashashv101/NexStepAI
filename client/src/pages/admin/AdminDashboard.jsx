@@ -19,7 +19,6 @@ const AdminDashboard = () => {
     totalUsers: 0,
     totalGoals: 0,
     totalRoadmaps: 0,
-    activeUsers: 0,
     recentActivities: []
   });
   const [loading, setLoading] = useState(true);
@@ -182,40 +181,6 @@ const AdminDashboard = () => {
             color="bg-purple-500"
             link="/admin/roadmaps"
           />
-          <StatCard
-            icon={Activity}
-            title="Active Users"
-            value={stats.activeUsers}
-            color="bg-orange-500"
-          />
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <QuickAction
-              icon={Plus}
-              title="Create New Goal"
-              description="Add a new career goal to the platform"
-              link="/admin/goals/create"
-              color="bg-green-500"
-            />
-            <QuickAction
-              icon={Plus}
-              title="Create New Roadmap"
-              description="Design a new learning roadmap"
-              link="/admin/roadmaps/create"
-              color="bg-purple-500"
-            />
-            <QuickAction
-              icon={Users}
-              title="Manage Users"
-              description="View and manage user accounts"
-              link="/admin/users"
-              color="bg-blue-500"
-            />
-          </div>
         </div>
 
         {/* Recent Activity */}

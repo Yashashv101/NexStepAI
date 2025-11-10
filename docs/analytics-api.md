@@ -26,7 +26,6 @@ Retrieves comprehensive analytics dashboard data including user metrics, goal co
   "success": true,
   "data": {
     "totalUsers": 1247,
-    "activeUsers": 892,
     "goalsCompleted": 89,
     "activeRoadmaps": 32,
     "userGrowth": [
@@ -44,8 +43,7 @@ Retrieves comprehensive analytics dashboard data including user metrics, goal co
       // ... more categories
     ],
     "averageCompletionTime": 28,
-    "successRate": 57,
-    "engagementScore": 8.7
+    "successRate": 57
   },
   "cached": false
 }
@@ -66,7 +64,6 @@ Retrieves administrative statistics including user counts, content metrics, and 
     "totalUsers": 1247,
     "totalGoals": 89,
     "totalRoadmaps": 32,
-    "activeUsers": 892,
     "recentActivities": [
       {
         "id": "activity_id",

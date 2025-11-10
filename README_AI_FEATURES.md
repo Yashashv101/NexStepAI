@@ -13,7 +13,7 @@ NexStepAI now includes a comprehensive AI-driven roadmap generation system that 
 - 🗺️ **Smart Roadmap Generation** - Get personalized learning paths in seconds
 - 🔄 **AI Powered** - Powered by Google Gemini (free tier available)
 - ⚡ **Real-time Generation** - See your roadmap created in 2-8 seconds
-- 📊 **Usage Tracking** - Monitor your AI roadmap generation credits
+- ♾️ **Unlimited Usage** - Generate as many roadmaps as you need
 
 ### For Admins:
 - 🔍 **Content Moderation** - Review and moderate AI-generated content
@@ -80,6 +80,7 @@ Each AI-generated roadmap includes:
 - 🎯 Skills to learn in each phase
 - 📚 Progressive difficulty
 - 🔄 Personalized to your context
+- ♾️ Unlimited generations - no restrictions
 
 ---
 
@@ -122,14 +123,9 @@ In `.env`, set how AI services are selected:
 AI_STRATEGY=gemini    # Always use Gemini
 ```
 
-### Rate Limits
+### Usage
 
-Control usage to manage costs:
-
-```env
-AI_MAX_REQUESTS_PER_USER=10      # Per hour
-AI_RATE_LIMIT_WINDOW=3600000     # 1 hour in ms
-```
+AI roadmap generation is unlimited - users can generate as many roadmaps as they need without restrictions.
 
 ### AI Models
 
@@ -146,7 +142,7 @@ GEMINI_MODEL=gemini-1.5-pro      # Higher quality
 ## 🔒 Security & Privacy
 
 - ✅ All AI endpoints require authentication
-- ✅ Rate limiting prevents abuse
+- ✅ Unlimited roadmap generation
 - ✅ API keys stored securely in environment
 - ✅ User data not shared with AI services
 - ✅ Admin-only moderation access
@@ -205,8 +201,8 @@ Save to Profile (accessible in dashboard)
 ### "AI service not configured"
 **Solution:** Add at least one API key to `.env` and restart server
 
-### "Rate limit exceeded"
-**Solution:** Wait for reset (shown in error message) or increase limit
+### "Service unavailable"
+**Solution:** Check AI service status and API key configuration
 
 ### "Generation failed"
 **Solution:** System automatically tries fallback service. Check both API keys.
@@ -224,7 +220,6 @@ Save to Profile (accessible in dashboard)
 ### Track Usage:
 
 - View generation count in user stats
-- Monitor rate limit remaining
 - Check AI service used for each roadmap
 - Review generation timestamps
 
@@ -256,7 +251,7 @@ Save to Profile (accessible in dashboard)
 1. Start with Gemini (free)
 2. Add OpenAI for fallback
 3. Monitor usage in first month
-4. Adjust rate limits as needed
+4. Enjoy unlimited roadmap generation
 
 ---
 
@@ -303,7 +298,7 @@ Result: 12-month roadmap from basic concepts to first project
 
 ### Current Version: 1.0
 - ✅ Dual AI integration (GPT + Gemini)
-- ✅ Rate limiting
+- ✅ Unlimited roadmap generation
 - ✅ Admin moderation
 - ✅ User-friendly UI
 
@@ -333,7 +328,7 @@ Result: 12-month roadmap from basic concepts to first project
 - ✅ Roadmap Generation
 - ✅ Dual AI Services
 - ✅ Service Fallback
-- ✅ Rate Limiting
+- ✅ Unlimited Usage
 - ✅ Admin Moderation
 - ✅ User Interface
 - ✅ Documentation

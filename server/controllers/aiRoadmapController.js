@@ -4,46 +4,6 @@ const Activity = require('../models/Activity');
 const { generateRoadmap, enhanceGoal } = require('../services/aiService');
 const { getCourseSuggestions: getCourseSuggestionsService, recordCourseFeedback: recordCourseFeedbackService } = require('../services/courseSuggestionService');
 
-// In-memory rate limiting store (in production, use Redis)
-const userRequestCounts = new Map();
-
-// Rate limiting helper
-function checkRateLimit(userId, maxRequests = 10, windowMs = 3600000) {
-  const now = Date.now();
-  const userKey = userId.toString();
-  
-  if (!userRequestCounts.has(userKey)) {
-    userRequestCounts.set(userKey, { count: 1, resetAt: now + windowMs });
-    return { allowed: true, remaining: maxRequests - 1, resetAt: now + windowMs };
-  }
-  
-  const userData = userRequestCounts.get(userKey);
-  
-  // Reset if window has expired
-  if (now >= userData.resetAt) {
-    userRequestCounts.set(userKey, { count: 1, resetAt: now + windowMs });
-    return { allowed: true, remaining: maxRequests - 1, resetAt: now + windowMs };
-  }
-  
-  // Check if limit exceeded
-  if (userData.count >= maxRequests) {
-    return { 
-      allowed: false, 
-      remaining: 0, 
-      resetAt: userData.resetAt,
-      retryAfter: Math.ceil((userData.resetAt - now) / 1000)
-    };
-  }
-  
-  // Increment count
-  userData.count++;
-  return { 
-    allowed: true, 
-    remaining: maxRequests - userData.count, 
-    resetAt: userData.resetAt 
-  };
-}
-
 // @desc    Submit a user goal and get AI enhancement suggestions
 // @route   POST /api/ai/enhance-goal
 // @access  Private
@@ -58,27 +18,13 @@ exports.enhanceUserGoal = async (req, res) => {
       });
     }
 
-    // Rate limiting
-    const rateLimitCheck = checkRateLimit(req.user.id);
-    if (!rateLimitCheck.allowed) {
-      return res.status(429).json({
-        success: false,
-        message: `Rate limit exceeded. Please try again in ${rateLimitCheck.retryAfter} seconds`,
-        retryAfter: rateLimitCheck.retryAfter
-      });
-    }
-
     // Call AI to enhance the goal
     const result = await enhanceGoal(goalText);
 
     res.status(200).json({
       success: true,
       data: result.enhancedGoal,
-      aiService: result.aiService,
-      rateLimit: {
-        remaining: rateLimitCheck.remaining,
-        resetAt: rateLimitCheck.resetAt
-      }
+      aiService: result.aiService
     });
   } catch (error) {
     console.error('Error enhancing goal:', error);
@@ -198,16 +144,6 @@ exports.generateAIRoadmap = async (req, res) => {
       });
     }
 
-    // Rate limiting
-    const rateLimitCheck = checkRateLimit(req.user.id, 10, 3600000); // 10 per hour
-    if (!rateLimitCheck.allowed) {
-      return res.status(429).json({
-        success: false,
-        message: `Rate limit exceeded. You can generate ${rateLimitCheck.remaining} more roadmaps. Please try again in ${rateLimitCheck.retryAfter} seconds`,
-        retryAfter: rateLimitCheck.retryAfter
-      });
-    }
-
     // Fetch the goal
     const goal = await Goal.findById(goalId);
     if (!goal) {
@@ -241,11 +177,7 @@ exports.generateAIRoadmap = async (req, res) => {
         goalName: goal.name
       },
       aiService: result.aiService,
-      aiModel: result.aiModel,
-      rateLimit: {
-        remaining: rateLimitCheck.remaining,
-        resetAt: rateLimitCheck.resetAt
-      }
+      aiModel: result.aiModel
     });
   } catch (error) {
     console.error('Error generating AI roadmap:', error);
@@ -395,25 +327,18 @@ exports.getUserAIStats = async (req, res) => {
       isUserSubmitted: true
     });
 
-    // Get rate limit info
-    const rateLimitCheck = checkRateLimit(userId, 10, 3600000);
-
     res.status(200).json({
       success: true,
       data: {
         aiRoadmapsGenerated: aiRoadmapsCount,
-        userGoalsSubmitted: userGoalsCount,
-        rateLimit: {
-          remaining: rateLimitCheck.remaining,
-          resetAt: rateLimitCheck.resetAt
-        }
+        userGoalsSubmitted: userGoalsCount
       }
     });
   } catch (error) {
-    console.error('Error fetching user AI stats:', error);
+    console.error('Error getting user AI stats:', error);
     res.status(500).json({
       success: false,
-      message: 'Server Error',
+      message: 'Failed to get user AI stats',
       error: error.message
     });
   }

@@ -46,24 +46,16 @@ exports.getAnalyticsDashboard = async (req, res) => {
       // Get basic stats
       const [
         totalUsers,
-        activeUsers,
         totalGoals,
         completedGoals,
         totalRoadmaps,
         activeRoadmaps,
-        userGrowthData,
         goalCompletionData,
         avgCompletionTime,
         successRate,
-        engagementScore
       ] = await Promise.all([
         // Total users
         User.countDocuments({ status: 'active' }),
-        
-        // Active users (users with activity in the time range)
-        Activity.distinct('userId', { 
-          createdAt: { $gte: startDate } 
-        }).then(userIds => userIds.length),
         
         // Total goals
         Goal.countDocuments(),
@@ -79,9 +71,6 @@ exports.getAnalyticsDashboard = async (req, res) => {
           lastActivityAt: { $gte: startDate } 
         }).then(roadmapIds => roadmapIds.length),
         
-        // User growth data (monthly)
-        getUserGrowthData(timeRange),
-        
         // Goal completion by category
         getGoalCompletionByCategory(),
         
@@ -90,34 +79,29 @@ exports.getAnalyticsDashboard = async (req, res) => {
         
         // Success rate
         getSuccessRate(),
-        
-        // Engagement score
-        getEngagementScore(startDate)
       ]);
 
-      // Calculate growth percentage
+      // Calculate user growth based on total users
       const previousPeriodStart = new Date(startDate.getTime() - (now.getTime() - startDate.getTime()));
-      const previousActiveUsers = await Activity.distinct('userId', { 
-        createdAt: { $gte: previousPeriodStart, $lt: startDate } 
-      }).then(userIds => userIds.length);
+      const previousTotalUsers = await User.countDocuments({ 
+        status: 'active',
+        createdAt: { $lt: startDate } 
+      });
       
-      const userGrowthPercentage = previousActiveUsers > 0 
-        ? ((activeUsers - previousActiveUsers) / previousActiveUsers * 100).toFixed(1)
+      const userGrowthPercentage = previousTotalUsers > 0 
+        ? ((totalUsers - previousTotalUsers) / previousTotalUsers * 100).toFixed(1)
         : 0;
 
       return {
         totalUsers,
-        activeUsers,
         totalGoals,
         completedGoals,
         totalRoadmaps,
         activeRoadmaps,
         avgCompletionTime,
         userGrowth: parseFloat(userGrowthPercentage),
-        userGrowthData,
         goalCompletionData,
         successRate,
-        engagementScore,
         timeRange
       };
     }, 5 * 60 * 1000); // Cache for 5 minutes
@@ -160,15 +144,11 @@ exports.getAdminStats = async (req, res) => {
         totalUsers,
         totalGoals,
         totalRoadmaps,
-        activeUsers,
         recentActivities
       ] = await Promise.all([
         User.countDocuments({ status: 'active' }),
         Goal.countDocuments(),
         Roadmap.countDocuments(),
-        Activity.distinct('userId', { 
-          createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } 
-        }).then(userIds => userIds.length),
         getRecentActivities()
       ]);
 
@@ -176,7 +156,6 @@ exports.getAdminStats = async (req, res) => {
         totalUsers,
         totalGoals,
         totalRoadmaps,
-        activeUsers,
         recentActivities
       };
     }, 3 * 60 * 1000); // Cache for 3 minutes
@@ -195,50 +174,6 @@ exports.getAdminStats = async (req, res) => {
     });
   }
 };
-
-// Helper function to get user growth data
-async function getUserGrowthData(timeRange) {
-  const now = new Date();
-  let periods = [];
-  
-  if (timeRange === '1y') {
-    // Get monthly data for the past year
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const nextDate = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-      
-      const userCount = await User.countDocuments({
-        createdAt: { $lt: nextDate },
-        status: 'active'
-      });
-      
-      periods.push({
-        month: date.toLocaleDateString('en-US', { month: 'short' }),
-        users: userCount
-      });
-    }
-  } else {
-    // Get daily data for shorter periods
-    const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const nextDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
-      
-      const userCount = await User.countDocuments({
-        createdAt: { $lt: nextDate },
-        status: 'active'
-      });
-      
-      periods.push({
-        month: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        users: userCount
-      });
-    }
-  }
-  
-  return periods;
-}
 
 // Helper function to get goal completion by category
 async function getGoalCompletionByCategory() {
@@ -310,22 +245,7 @@ async function getSuccessRate() {
   return Math.round((completedProgress / totalProgress) * 100);
 }
 
-// Helper function to get engagement score
-async function getEngagementScore(startDate) {
-  // Calculate engagement based on activity frequency and completion rates
-  const totalUsers = await User.countDocuments({ status: 'active' });
-  const activeUsers = await Activity.distinct('userId', { 
-    createdAt: { $gte: startDate } 
-  }).then(userIds => userIds.length);
-  
-  const activityRate = totalUsers > 0 ? (activeUsers / totalUsers) : 0;
-  const successRate = await getSuccessRate();
-  
-  // Weighted average of activity rate and success rate
-  const engagementScore = (activityRate * 0.6 + (successRate / 100) * 0.4) * 10;
-  
-  return Math.round(engagementScore * 10) / 10; // Round to 1 decimal place
-}
+
 
 // Helper function to get recent activities
 async function getRecentActivities() {

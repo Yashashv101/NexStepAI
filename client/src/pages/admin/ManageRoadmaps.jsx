@@ -461,9 +461,9 @@ const ManageRoadmaps = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {Array.isArray(filteredRoadmaps) && filteredRoadmaps.length > 0 ? (
             filteredRoadmaps.map((roadmap) => {
-              const goalName = Array.isArray(goals) ? 
-                (goals.find(goal => goal._id === roadmap.goalId)?.name || 'Unknown Goal') : 
-                'Unknown Goal';
+              const goalIdStr = roadmap.goalId?._id || roadmap.goalId;
+              const goal = Array.isArray(goals) ? goals.find(g => String(g._id) === String(goalIdStr)) : null;
+              const goalName = goal?.name || (goalIdStr ? `Goal ID: ${goalIdStr}` : 'No goal linked');
               return (
                 <div key={roadmap._id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
                   <div className="flex justify-between items-start mb-4">

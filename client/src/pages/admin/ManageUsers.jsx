@@ -99,18 +99,6 @@ const ManageUsers = () => {
     setFilteredUsers(filtered);
   }, [users, searchTerm, roleFilter, statusFilter]);
 
-  // Handle role change
-  const handleRoleChange = async (userId, newRole) => {
-    try {
-      await updateUser(userId, { role: newRole });
-      await fetchUsers(); // Refresh the list
-      await fetchStats(); // Refresh stats
-    } catch (err) {
-      console.error('Error updating user role:', err);
-      setError('Failed to update user role. Please try again.');
-    }
-  };
-
   // Handle status change
   const handleStatusChange = async (userId, newStatus) => {
     try {
@@ -179,10 +167,6 @@ const ManageUsers = () => {
               <h1 className="text-3xl font-bold text-[var(--text-primary)]">User Management</h1>
               <p className="mt-2 text-[var(--muted)]">Manage user accounts and permissions</p>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
-              <UserPlus className="h-5 w-5 mr-2" />
-              Add User
-            </button>
           </div>
         </div>
 
@@ -291,14 +275,11 @@ const ManageUsers = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <select
+                      <span
                         className="px-2 py-1 text-xs font-semibold rounded-full bg-[var(--bg-800)] text-[var(--text-primary)] border border-[rgba(230,239,239,0.12)]"
-                        value={user.role}
-                        onChange={(e) => handleRoleChange(user._id, e.target.value)}
                       >
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
-                      </select>
+                        {user.role}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <select

@@ -224,12 +224,12 @@ const AIRoadmapGenerator = () => {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between text-sm">
             <div>
-              <span className="text-blue-700">Roadmaps Generated: </span>
-              <span className="font-semibold">{aiStats.aiRoadmapsGenerated}</span>
+              <span className="text-blue-800">Roadmaps Generated: </span>
+              <span className="font-semibold text-blue-900">{aiStats.aiRoadmapsGenerated}</span>
             </div>
             <div>
-              <span className="text-blue-700">Remaining Credits: </span>
-              <span className="font-semibold">{aiStats.rateLimit?.remaining || 0}/10</span>
+              <span className="text-blue-800">Goals Submitted: </span>
+              <span className="font-semibold text-blue-900">{aiStats.userGoalsSubmitted}</span>
             </div>
           </div>
         </div>
@@ -392,17 +392,17 @@ const AIRoadmapGenerator = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="border border-gray-200 rounded-lg p-4">
-              <label className="block text-sm font-medium text-gray-500 mb-1">Goal Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Goal Name</label>
               <p className="text-lg font-semibold text-gray-900">{enhancedGoal.suggestedName}</p>
             </div>
 
             <div className="border border-gray-200 rounded-lg p-4">
-              <label className="block text-sm font-medium text-gray-500 mb-1">Category</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
               <p className="text-lg font-semibold text-gray-900">{enhancedGoal.category}</p>
             </div>
 
             <div className="border border-gray-200 rounded-lg p-4">
-              <label className="block text-sm font-medium text-gray-500 mb-1">Difficulty</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
               <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
                 enhancedGoal.difficulty === 'beginner' ? 'bg-green-100 text-green-800' :
                 enhancedGoal.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
@@ -413,22 +413,22 @@ const AIRoadmapGenerator = () => {
             </div>
 
             <div className="border border-gray-200 rounded-lg p-4">
-              <label className="block text-sm font-medium text-gray-500 mb-1">Estimated Time</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Time</label>
               <p className="text-lg font-semibold text-gray-900">{enhancedGoal.estimatedTime}</p>
             </div>
           </div>
 
           <div className="border border-gray-200 rounded-lg p-4">
-            <label className="block text-sm font-medium text-gray-500 mb-2">Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
             <p className="text-gray-900">{enhancedGoal.description}</p>
           </div>
 
           {enhancedGoal.tags && enhancedGoal.tags.length > 0 && (
             <div className="border border-gray-200 rounded-lg p-4">
-              <label className="block text-sm font-medium text-gray-500 mb-2">Tags</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
               <div className="flex flex-wrap gap-2">
                 {enhancedGoal.tags.map((tag, index) => (
-                  <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                     {tag}
                   </span>
                 ))}
@@ -509,17 +509,20 @@ const AIRoadmapGenerator = () => {
       {generatedRoadmap && generatedRoadmap.roadmap && (
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">{generatedRoadmap.roadmap.title}</h3>
-            <p className="text-gray-700 mb-4">{generatedRoadmap.roadmap.description}</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">{generatedRoadmap.roadmap.title}</h3>
+            {/* Strong contrast container for description to avoid blending with gradient background */}
+            <div className="bg-white rounded-md shadow-sm px-4 py-3 mb-4">
+              <p className="text-gray-900 leading-relaxed">{generatedRoadmap.roadmap.description}</p>
+            </div>
             
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-2 gap-4 text-sm mt-1">
               <div className="flex items-center">
                 <Clock className="h-4 w-4 mr-2 text-blue-600" />
-                <span><strong>Duration:</strong> {generatedRoadmap.roadmap.estimatedDuration}</span>
+                <span className="text-gray-800"><strong>Duration:</strong> {generatedRoadmap.roadmap.estimatedDuration}</span>
               </div>
               <div className="flex items-center">
                 <Target className="h-4 w-4 mr-2 text-blue-600" />
-                <span><strong>Difficulty:</strong> {generatedRoadmap.roadmap.difficulty}</span>
+                <span className="text-gray-800"><strong>Difficulty:</strong> {generatedRoadmap.roadmap.difficulty}</span>
               </div>
             </div>
           </div>
@@ -532,16 +535,16 @@ const AIRoadmapGenerator = () => {
             
             <div className="space-y-4">
               {generatedRoadmap.roadmap.steps?.map((step, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white">
                   <div className="flex items-start">
                     <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                      <span className="text-blue-600 font-semibold">{step.order || index + 1}</span>
+                      <span className="text-blue-800 font-semibold">{step.order || index + 1}</span>
                     </div>
                     <div className="flex-1">
                       <h5 className="font-semibold text-gray-900 mb-1">{step.title}</h5>
-                      <p className="text-gray-600 text-sm mb-3">{step.description}</p>
+                      <p className="text-gray-700 text-sm mb-3">{step.description}</p>
                       
-                      <div className="flex items-center text-sm text-gray-500 mb-2">
+                      <div className="flex items-center text-sm text-gray-600 mb-2">
                         <Clock className="h-4 w-4 mr-1" />
                         {step.duration}
                       </div>
@@ -549,7 +552,7 @@ const AIRoadmapGenerator = () => {
                       {step.skills && step.skills.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
                           {step.skills.map((skill, skillIdx) => (
-                            <span key={skillIdx} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                            <span key={skillIdx} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
                               {skill}
                             </span>
                           ))}

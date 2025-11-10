@@ -94,7 +94,7 @@ Delete an activity.
 ## Analytics (Admin Only)
 
 ### GET /api/analytics/dashboard
-Get comprehensive analytics dashboard data including user metrics, goal completion statistics, and engagement scores.
+Get comprehensive analytics dashboard data including user metrics, goal completion statistics, and system performance data.
 
 **Authentication:** Admin role required
 **Caching:** 5 minutes TTL

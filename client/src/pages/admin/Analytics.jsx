@@ -101,7 +101,7 @@ const Analytics = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
         <p className="mt-2 text-gray-600">
-          Monitor system performance and user engagement metrics
+          Monitor system performance and analytics metrics
         </p>
       </div>
 
@@ -137,14 +137,6 @@ const Analytics = () => {
           color="blue"
         />
         <StatCard
-          title="Active Users"
-          value={analyticsData?.activeUsers?.toLocaleString() || '0'}
-          icon={Activity}
-          trend="up"
-          trendValue="8.2"
-          color="green"
-        />
-        <StatCard
           title="Goals Completed"
           value={analyticsData?.completedGoals || '0'}
           icon={Target}
@@ -164,33 +156,11 @@ const Analytics = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* User Growth Chart */}
+        {/* User Growth Chart - Removed */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">User Growth</h3>
-          <div className="space-y-4">
-            {analyticsData?.userGrowthData?.map((data, index) => {
-              const maxUsers = Math.max(...(analyticsData?.userGrowthData?.map(d => d.users) || [1]));
-              return (
-                <div key={data.month} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{data.month}</span>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${(data.users / maxUsers) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 w-12 text-right">
-                      {data.users}
-                    </span>
-                  </div>
-                </div>
-              );
-            }) || (
-              <div className="text-center text-gray-500 py-8">
-                No user growth data available
-              </div>
-            )}
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">System Performance</h3>
+          <div className="text-center text-gray-500 py-8">
+            User growth tracking has been disabled
           </div>
         </div>
 
@@ -248,17 +218,6 @@ const Analytics = () => {
             }%
           </p>
           <p className="text-sm text-gray-600 mt-2">Goal completion rate</p>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Engagement Score</h3>
-            <BarChart3 className="h-6 w-6 text-purple-600" />
-          </div>
-          <p className="text-3xl font-bold text-gray-900">
-            {analyticsData?.engagementScore || '0'}/10
-          </p>
-          <p className="text-sm text-gray-600 mt-2">User satisfaction rating</p>
         </div>
       </div>
     </div>
