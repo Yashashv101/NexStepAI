@@ -361,7 +361,7 @@ const ManageRoadmaps = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[var(--bg-900)] p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex justify-between items-center">
           <div>
@@ -413,14 +413,14 @@ const ManageRoadmaps = () => {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="bg-[var(--bg-900)] border border-[rgba(230,239,239,0.12)] rounded-lg p-6 mb-6">
           <div className="space-y-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--muted)] h-5 w-5" />
               <input
                 type="text"
                 placeholder="Search roadmaps by title, description, or goal..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] placeholder-[var(--muted)] focus:ring-2 focus:ring-[var(--accent-green)] focus:border-transparent"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -428,9 +428,9 @@ const ManageRoadmaps = () => {
             
             <div className="flex space-x-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Generation Type</label>
+                <label className="block text-sm font-medium text-[var(--muted)] mb-1">Generation Type</label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-green)]"
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                 >
@@ -441,9 +441,9 @@ const ManageRoadmaps = () => {
               </div>
               
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Moderation Status</label>
+                <label className="block text-sm font-medium text-[var(--muted)] mb-1">Moderation Status</label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-green)]"
                   value={moderationFilter}
                   onChange={(e) => setModerationFilter(e.target.value)}
                 >
@@ -596,7 +596,7 @@ const ManageRoadmaps = () => {
                     <input
                       type="text"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-green)]"
                       value={newRoadmap.title}
                       onChange={(e) => setNewRoadmap({...newRoadmap, title: e.target.value})}
                     />
@@ -614,12 +614,12 @@ const ManageRoadmaps = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">
                       Goal *
                     </label>
                     <select
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-green)]"
                       value={newRoadmap.goalId}
                       onChange={(e) => setNewRoadmap({...newRoadmap, goalId: e.target.value})}
                     >
@@ -646,11 +646,11 @@ const ManageRoadmaps = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-[var(--muted)] mb-1">
                         Difficulty *
                       </label>
                       <select
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-green)]"
                         value={newRoadmap.difficulty}
                         onChange={(e) => setNewRoadmap({...newRoadmap, difficulty: e.target.value})}
                       >

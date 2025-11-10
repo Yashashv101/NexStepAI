@@ -20,6 +20,7 @@ import {
   getUserAIStats
 } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
+import CourseSuggestions from '../../components/CourseSuggestions';
 
 const AIRoadmapGenerator = () => {
   const navigate = useNavigate();
@@ -560,6 +561,16 @@ const AIRoadmapGenerator = () => {
               ))}
             </div>
           </div>
+
+          {/* Course Suggestions Component */}
+          <CourseSuggestions 
+            roadmapContent={{
+              title: generatedRoadmap.roadmap.title,
+              description: generatedRoadmap.roadmap.description,
+              difficulty: generatedRoadmap.roadmap.difficulty,
+              steps: generatedRoadmap.roadmap.steps
+            }}
+          />
 
           <div className="flex space-x-4">
             <button

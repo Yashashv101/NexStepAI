@@ -578,4 +578,25 @@ export const generateResumeRoadmap = async (payload) => {
   }
 };
 
+// Course Suggestion API calls
+export const getCourseSuggestions = async (suggestionData) => {
+  try {
+    const response = await api.post('/ai/course-suggestions', suggestionData);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting course suggestions:', error);
+    throw error;
+  }
+};
+
+export const recordCourseFeedback = async (feedbackData) => {
+  try {
+    const response = await api.post('/ai/course-feedback', feedbackData);
+    return response.data;
+  } catch (error) {
+    console.error('Error recording course feedback:', error);
+    throw error;
+  }
+};
+
 export default api;

@@ -257,11 +257,11 @@ const RoadmapView = () => {
 
   if (roadmaps.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-900)] flex items-center justify-center">
         <div className="text-center">
-          <Map className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No roadmaps found</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <Map className="mx-auto h-12 w-12 text-[var(--muted)]" />
+          <h3 className="mt-2 text-sm font-medium text-[var(--text-primary)]">No roadmaps found</h3>
+          <p className="mt-1 text-sm text-[var(--muted)]">
             Start your learning journey by selecting a goal and generating a roadmap.
           </p>
         </div>
@@ -270,25 +270,25 @@ const RoadmapView = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[var(--bg-900)] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+          <h1 className="text-3xl font-bold text-[var(--text-primary)] flex items-center">
             <Map className="h-8 w-8 mr-3" />
             My Learning Roadmaps
           </h1>
-          <p className="text-gray-600 mt-2">Track your progress and continue your learning journey</p>
+          <p className="text-[var(--muted)] mt-2">Track your progress and continue your learning journey</p>
 
           {/* Error Banner */}
           {error && (
-            <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="mt-4 bg-[var(--banner-red)] border border-[rgba(255,99,71,0.28)] rounded-lg p-4">
               <div className="flex items-center">
-                <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-                <p className="text-sm text-red-700">{error}</p>
+                <AlertCircle className="h-5 w-5 text-[#ff7b7b] mr-2" />
+                <p className="text-sm text-[var(--text-primary)]">{error}</p>
                 <button
                   onClick={() => setError(null)}
-                  className="ml-auto text-red-400 hover:text-red-600"
+                  className="ml-auto text-[#ff7b7b] hover:text-[#ff4d4d]"
                 >
                   ×
                 </button>
@@ -300,40 +300,40 @@ const RoadmapView = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Roadmaps List */}
           <div className="lg:col-span-1">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Roadmaps</h2>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Your Roadmaps</h2>
             <div className="space-y-4">
               {roadmaps.map((roadmap) => (
                 <div
                   key={roadmap._id}
                   onClick={() => setSelectedRoadmap(roadmap)}
-                  className={`bg-white rounded-lg shadow-md p-4 cursor-pointer transition-all ${selectedRoadmap?._id === roadmap._id
-                    ? 'ring-2 ring-blue-500 border-blue-500'
+                  className={`bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md p-4 cursor-pointer transition-all ${selectedRoadmap?._id === roadmap._id
+                    ? 'ring-2 ring-[var(--accent-green)] border-[var(--accent-green)]'
                     : 'hover:shadow-lg'
                     }`}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-gray-900 text-sm">{roadmap.title}</h3>
+                    <h3 className="font-semibold text-[var(--text-primary)] text-sm">{roadmap.title}</h3>
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getDifficultyColor(roadmap.difficulty)}`}>
                       {roadmap.difficulty}
                     </span>
                   </div>
-                  <div className="flex items-center text-xs text-gray-500 mb-2">
+                  <div className="flex items-center text-xs text-[var(--muted)] mb-2">
                     <Target className="h-3 w-3 mr-1" />
                     {roadmap.goalId?.name || 'No Goal'}
                   </div>
                   <div className="mb-2">
-                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                    <div className="flex justify-between text-xs text-[var(--muted)] mb-1">
                       <span>Progress</span>
                       <span>{getProgressPercentage(roadmap.steps)}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-[rgba(255,255,255,0.12)] rounded-full h-2">
                       <div
-                        className="bg-blue-600 h-2 rounded-full transition-all"
+                        className="bg-[var(--accent-green)] h-2 rounded-full transition-all"
                         style={{ width: `${getProgressPercentage(roadmap.steps)}%` }}
                       ></div>
                     </div>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500">
+                  <div className="flex justify-between text-xs text-[var(--muted)]">
                     <div className="flex items-center">
                       <Clock className="h-3 w-3 mr-1" />
                       {getTotalTimeSpent(roadmap.steps)}h spent
@@ -351,13 +351,13 @@ const RoadmapView = () => {
           {/* Selected Roadmap Details */}
           <div className="lg:col-span-2">
             {selectedRoadmap && (
-              <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md p-6">
                 {/* Roadmap Header */}
                 <div className="mb-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900">{selectedRoadmap.title}</h2>
-                      <p className="text-gray-600 mt-1">{selectedRoadmap.description}</p>
+                      <h2 className="text-2xl font-bold text-[var(--text-primary)]">{selectedRoadmap.title}</h2>
+                      <p className="text-[var(--muted)] mt-1">{selectedRoadmap.description}</p>
                     </div>
                     <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getDifficultyColor(selectedRoadmap.difficulty)}`}>
                       {selectedRoadmap.difficulty}
@@ -366,47 +366,47 @@ const RoadmapView = () => {
 
                   {/* Progress Stats */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-blue-50 rounded-lg p-4">
+                    <div className="bg-[var(--bg-800)] rounded-lg p-4 border border-[rgba(230,239,239,0.12)]">
                       <div className="flex items-center">
-                        <TrendingUp className="h-5 w-5 text-blue-600 mr-2" />
+                        <TrendingUp className="h-5 w-5 text-[var(--accent-green)] mr-2" />
                         <div>
-                          <p className="text-2xl font-bold text-blue-600">
+                          <p className="text-2xl font-bold text-[var(--text-primary)]">
                             {getProgressPercentage(selectedRoadmap.steps)}%
                           </p>
-                          <p className="text-sm text-gray-600">Complete</p>
+                          <p className="text-sm text-[var(--muted)]">Complete</p>
                         </div>
                       </div>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-4">
+                    <div className="bg-[var(--bg-800)] rounded-lg p-4 border border-[rgba(230,239,239,0.12)]">
                       <div className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                        <CheckCircle className="h-5 w-5 text-[var(--accent-green)] mr-2" />
                         <div>
-                          <p className="text-2xl font-bold text-green-600">
+                          <p className="text-2xl font-bold text-[var(--text-primary)]">
                             {selectedRoadmap.steps.filter(s => s.completed).length}
                           </p>
-                          <p className="text-sm text-gray-600">Steps Done</p>
+                          <p className="text-sm text-[var(--muted)]">Steps Done</p>
                         </div>
                       </div>
                     </div>
-                    <div className="bg-purple-50 rounded-lg p-4">
+                    <div className="bg-[var(--bg-800)] rounded-lg p-4 border border-[rgba(230,239,239,0.12)]">
                       <div className="flex items-center">
-                        <Clock className="h-5 w-5 text-purple-600 mr-2" />
+                        <Clock className="h-5 w-5 text-[var(--accent-green)] mr-2" />
                         <div>
-                          <p className="text-2xl font-bold text-purple-600">
+                          <p className="text-2xl font-bold text-[var(--text-primary)]">
                             {getTotalTimeSpent(selectedRoadmap.steps)}h
                           </p>
-                          <p className="text-sm text-gray-600">Time Spent</p>
+                          <p className="text-sm text-[var(--muted)]">Time Spent</p>
                         </div>
                       </div>
                     </div>
-                    <div className="bg-orange-50 rounded-lg p-4">
+                    <div className="bg-[var(--bg-800)] rounded-lg p-4 border border-[rgba(230,239,239,0.12)]">
                       <div className="flex items-center">
-                        <Target className="h-5 w-5 text-orange-600 mr-2" />
+                        <Target className="h-5 w-5 text-[var(--accent-green)] mr-2" />
                         <div>
-                          <p className="text-2xl font-bold text-orange-600">
+                          <p className="text-2xl font-bold text-[var(--text-primary)]">
                             {selectedRoadmap.steps.length}
                           </p>
-                          <p className="text-sm text-gray-600">Total Steps</p>
+                          <p className="text-sm text-[var(--muted)]">Total Steps</p>
                         </div>
                       </div>
                     </div>
@@ -414,13 +414,13 @@ const RoadmapView = () => {
 
                   {/* Overall Progress Bar */}
                   <div className="mb-6">
-                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                    <div className="flex justify-between text-sm text-[var(--muted)] mb-2">
                       <span>Overall Progress</span>
                       <span>{getProgressPercentage(selectedRoadmap.steps)}% Complete</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="w-full bg-[rgba(255,255,255,0.12)] rounded-full h-3">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all"
+                        className="bg-[var(--accent-green)] h-3 rounded-full transition-all"
                         style={{ width: `${getProgressPercentage(selectedRoadmap.steps)}%` }}
                       ></div>
                     </div>
@@ -429,47 +429,47 @@ const RoadmapView = () => {
 
                 {/* Learning Steps - All Steps Shown */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Learning Steps</h3>
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Learning Steps</h3>
                   <div className="space-y-3">
                     {selectedRoadmap.steps.map((step, index) => (
                       <div
                         key={step._id}
-                        className={`p-4 rounded-lg border-2 transition-all ${step.completed
-                          ? 'bg-green-50 border-green-200'
-                          : 'bg-gray-50 border-gray-200'
+                        className={`p-4 rounded-lg border transition-all ${step.completed
+                          ? 'bg-[rgba(29,185,84,0.08)] border-[rgba(29,185,84,0.28)]'
+                          : 'bg-[var(--bg-800)] border-[rgba(230,239,239,0.12)]'
                           }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <span className={`text-sm font-medium px-2 py-1 rounded ${step.completed ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'
+                              <span className={`text-sm font-medium px-2 py-1 rounded ${step.completed ? 'bg-[rgba(29,185,84,0.12)] text-[var(--accent-green)]' : 'bg-[var(--bg-700)] text-[var(--text-primary)]'
                                 }`}>
                                 Step {index + 1}
                               </span>
-                              <h4 className={`font-semibold ${step.completed ? 'text-green-800' : 'text-gray-900'
+                              <h4 className={`font-semibold ${step.completed ? 'text-[var(--accent-green)]' : 'text-[var(--text-primary)]'
                                 }`}>
                                 {step.title}
                               </h4>
                               {step.completed && (
-                                <CheckCircle className="h-5 w-5 text-green-600" />
+                                <CheckCircle className="h-5 w-5 text-[var(--accent-green)]" />
                               )}
                             </div>
                             {step.description && (
-                              <p className="text-sm text-gray-600 mb-2">{step.description}</p>
+                              <p className="text-sm text-[var(--muted)] mb-2">{step.description}</p>
                             )}
                             {step.skills && step.skills.length > 0 && (
                               <div className="flex flex-wrap gap-1 mb-2">
                                 {step.skills.map((skill, skillIndex) => (
                                   <span
                                     key={skillIndex}
-                                    className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded"
+                                    className="text-xs px-2 py-1 rounded bg-[rgba(29,185,84,0.08)] text-[var(--accent-green)]"
                                   >
                                     {skill}
                                   </span>
                                 ))}
                               </div>
                             )}
-                            <div className="flex items-center text-sm text-gray-500">
+                            <div className="flex items-center text-sm text-[var(--muted)]">
                               <Clock className="h-4 w-4 mr-1" />
                               Duration: {step.duration}
                             </div>
@@ -479,8 +479,8 @@ const RoadmapView = () => {
                               onClick={() => handleMarkStepCompleted(step._id)}
                               disabled={updatingStep === step._id || step.completed}
                               className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center ${step.completed
-                                ? 'bg-green-100 text-green-800 cursor-not-allowed'
-                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                ? 'bg-[rgba(29,185,84,0.12)] text-[var(--accent-green)] cursor-not-allowed'
+                                : 'bg-[var(--accent-green)] text-[var(--bg-900)] hover:bg-[var(--accent-green-600)]'
                                 } disabled:opacity-50`}
                             >
                               {updatingStep === step._id ? (
@@ -505,8 +505,8 @@ const RoadmapView = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-6 flex justify-between items-center pt-6 border-t border-gray-200">
-                  <div className="flex items-center text-sm text-gray-500">
+                <div className="mt-6 flex justify-between items-center pt-6 border-t border-[rgba(230,239,239,0.12)]">
+                  <div className="flex items-center text-sm text-[var(--muted)]">
                     <Calendar className="h-4 w-4 mr-1" />
                     Started on {new Date(selectedRoadmap.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
@@ -518,12 +518,12 @@ const RoadmapView = () => {
                     <button
                       onClick={handleResetProgress}
                       disabled={loading}
-                      className="flex items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                      className="flex items-center px-4 py-2 text-[var(--text-primary)] bg-[var(--bg-800)] border border-[rgba(230,239,239,0.12)] rounded-lg hover:bg-[var(--bg-900)] disabled:opacity-50 transition-colors"
                     >
                       <RotateCcw className="h-4 w-4 mr-2" />
                       Reset Progress
                     </button>
-                    <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <button className="flex items-center px-4 py-2 bg-[var(--accent-green)] text-[var(--bg-900)] rounded-lg hover:bg-[var(--accent-green-600)] transition-colors">
                       <BookOpen className="h-4 w-4 mr-2" />
                       Continue Learning
                     </button>

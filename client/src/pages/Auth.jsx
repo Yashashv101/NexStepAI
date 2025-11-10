@@ -97,14 +97,14 @@ function Auth() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-indigo-700">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-green-600">
           {isLogin ? 'Sign in to your account' : 'Create a new account'}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none"
+            className="font-medium text-indigo-600 hover:text-indigo-500 bg-transparent hover:bg-transparent p-0 border-0 rounded-none focus:outline-none focus:ring-0"
           >
             {isLogin ? 'Register' : 'Sign in'}
           </button>
@@ -199,7 +199,11 @@ function Auth() {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className={`w-full flex justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 
+                  ${isLogin 
+                    ? 'text-white bg-indigo-600 hover:bg-indigo-700 border border-transparent focus:ring-indigo-500' 
+                    : 'text-green-600 bg-transparent border border-green-600 hover:bg-green-50 focus:ring-green-500'}
+                `}
               >
                 {isLogin ? 'Sign in' : 'Register'}
               </button>

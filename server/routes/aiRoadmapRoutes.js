@@ -8,7 +8,9 @@ const {
   getAllAIRoadmaps,
   getAllUserGoals,
   moderateRoadmap,
-  moderateGoal
+  moderateGoal,
+  getCourseSuggestions,
+  recordCourseFeedback
 } = require('../controllers/aiRoadmapController');
 const auth = require('../middleware/authMiddleware');
 const roleAuth = require('../middleware/roleAuth');
@@ -21,6 +23,8 @@ router.post('/create-user-goal', auth, createUserGoal);
 router.post('/generate-roadmap', auth, generateAIRoadmap);
 router.post('/save-roadmap', auth, saveAIRoadmap);
 router.get('/user-stats', auth, getUserAIStats);
+router.post('/course-suggestions', auth, getCourseSuggestions);
+router.post('/course-feedback', auth, recordCourseFeedback);
 
 // Admin routes
 router.get('/admin/roadmaps', auth, roleAuth('admin'), getAllAIRoadmaps);

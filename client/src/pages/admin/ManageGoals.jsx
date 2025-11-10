@@ -241,16 +241,16 @@ const ManageGoals = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[var(--bg-900)] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+            <h1 className="text-3xl font-bold text-[var(--text-primary)] flex items-center">
               <Target className="h-8 w-8 mr-3" />
               Manage Goals
             </h1>
-            <p className="text-gray-600 mt-2">Create and manage career goals</p>
+            <p className="text-[var(--muted)] mt-2">Create and manage career goals</p>
           </div>
           <button
             onClick={() => {
@@ -289,14 +289,14 @@ const ManageGoals = () => {
         )}
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="bg-[var(--bg-900)] border border-[rgba(230,239,239,0.12)] rounded-lg p-6 mb-6">
           <div className="space-y-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--muted)] h-5 w-5" />
               <input
                 type="text"
                 placeholder="Search goals by name, description, or category..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] placeholder-[var(--muted)] focus:ring-2 focus:ring-[var(--accent-green)] focus:border-transparent"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -304,9 +304,9 @@ const ManageGoals = () => {
             
             <div className="flex space-x-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                <label className="block text-sm font-medium text-[var(--muted)] mb-1">Source</label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-green)]"
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                 >
@@ -317,9 +317,9 @@ const ManageGoals = () => {
               </div>
               
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Moderation Status</label>
+                <label className="block text-sm font-medium text-[var(--muted)] mb-1">Moderation Status</label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-green)]"
                   value={moderationFilter}
                   onChange={(e) => setModerationFilter(e.target.value)}
                 >
@@ -450,7 +450,7 @@ const ManageGoals = () => {
                     <input
                       type="text"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-green)] focus:border-transparent"
                       value={newGoal.name}
                       onChange={(e) => setNewGoal({...newGoal, name: e.target.value})}
                     />
@@ -468,12 +468,12 @@ const ManageGoals = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">
                       Category
                     </label>
                     <select
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-green)] focus:border-transparent"
                       value={newGoal.category}
                       onChange={(e) => setNewGoal({...newGoal, category: e.target.value})}
                     >
@@ -495,11 +495,11 @@ const ManageGoals = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[var(--muted)] mb-1">
                       Difficulty
                     </label>
                     <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[rgba(230,239,239,0.12)] rounded-lg bg-[var(--bg-800)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent-green)] focus:border-transparent"
                       value={newGoal.difficulty}
                       onChange={(e) => setNewGoal({...newGoal, difficulty: e.target.value})}
                     >

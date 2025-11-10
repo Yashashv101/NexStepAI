@@ -33,6 +33,21 @@ const Profile = () => {
   const [loadingStats, setLoadingStats] = useState(false);
   const [loadingActivities, setLoadingActivities] = useState(false);
 
+  // Robust date formatting helpers to avoid 'Invalid Date'
+  const parseDateSafe = (value) => {
+    if (!value) return null;
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  };
+  const formatDateLong = (value) => {
+    const d = parseDateSafe(value);
+    return d ? d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
+  };
+  const formatDateShort = (value) => {
+    const d = parseDateSafe(value);
+    return d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A';
+  };
+
   useEffect(() => {
     fetchUserProfile();
     fetchUserStats();
@@ -268,7 +283,7 @@ const Profile = () => {
             </div>
             <button
               onClick={handleEditToggle}
-              className="flex items-center px-4 py-2 text-blue-600 hover:text-blue-800 border border-blue-600 hover:border-blue-800 rounded-lg transition-colors"
+              className="flex items-center px-4 py-2 text-[var(--text-primary)] hover:text-[var(--accent-green)] border border-[rgba(230,239,239,0.12)] hover:border-[var(--accent-green)] rounded-lg transition-colors"
             >
               {isEditing ? (
                 <>
@@ -337,11 +352,7 @@ const Profile = () => {
                 </label>
                 <div className="flex items-center text-gray-900">
                   <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                  {new Date(user.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
+                  {formatDateLong(user.createdAt)}
                 </div>
               </div>
               <div>
@@ -350,11 +361,7 @@ const Profile = () => {
                 </label>
                 <div className="flex items-center text-gray-900">
                   <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                  {new Date(user.lastActive).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
+                  {formatDateLong(user.lastActive)}
                 </div>
               </div>
               <div>
@@ -450,10 +457,7 @@ const Profile = () => {
                 };
 
                 const { icon: ActivityIcon, bgColor, iconColor } = getActivityIcon(activity.type);
-                const timeAgo = new Date(activity.timestamp).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric'
-                });
+                const timeAgo = formatDateShort(activity.timestamp);
 
                 return (
                   <div key={activity._id || index} className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">

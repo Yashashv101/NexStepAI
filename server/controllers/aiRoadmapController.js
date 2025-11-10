@@ -2,6 +2,7 @@ const Goal = require('../models/Goal');
 const Roadmap = require('../models/Roadmap');
 const Activity = require('../models/Activity');
 const { generateRoadmap, enhanceGoal } = require('../services/aiService');
+const { getCourseSuggestions: getCourseSuggestionsService, recordCourseFeedback: recordCourseFeedbackService } = require('../services/courseSuggestionService');
 
 // In-memory rate limiting store (in production, use Redis)
 const userRequestCounts = new Map();
@@ -593,6 +594,120 @@ exports.moderateGoal = async (req, res) => {
     });
   } catch (error) {
     console.error('Error moderating goal:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get course suggestions based on roadmap content
+// @route   POST /api/ai/course-suggestions
+// @access  Private
+exports.getCourseSuggestions = async (req, res) => {
+  try {
+    const { roadmapContent, difficulty, maxSuggestions = 5, minScore = 0.3 } = req.body;
+
+    if (!roadmapContent) {
+      return res.status(400).json({
+        success: false,
+        message: 'Roadmap content is required'
+      });
+    }
+
+    // Get course suggestions from the service
+    const result = await getCourseSuggestionsService(roadmapContent, {
+      difficulty,
+      maxSuggestions,
+      minScore,
+      userId: req.user.id
+    });
+
+    // Handle the case when no courses are found
+    if (result.success && result.suggestions.length === 0 && result.actionableFeedback) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          suggestions: [],
+          count: 0,
+          message: result.message,
+          actionableFeedback: result.actionableFeedback,
+          analysis: result.analysis,
+          generatedAt: new Date()
+        }
+      });
+    }
+
+    // Handle fallback courses (when popular courses are returned instead of matches)
+    if (result.success && result.suggestions.length > 0 && result.suggestions.some(course => course.isPopularFallback)) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          suggestions: result.suggestions,
+          count: result.suggestions.length,
+          message: result.message,
+          isFallback: true,
+          analysis: result.analysis,
+          generatedAt: new Date()
+        }
+      });
+    }
+
+    // Standard successful response
+    res.status(200).json({
+      success: true,
+      data: {
+        suggestions: result.suggestions || [],
+        count: result.suggestions ? result.suggestions.length : 0,
+        analysis: result.analysis,
+        generatedAt: new Date()
+      }
+    });
+  } catch (error) {
+    console.error('Error getting course suggestions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Record feedback for a course suggestion
+// @route   POST /api/ai/course-feedback
+// @access  Private
+exports.recordCourseFeedback = async (req, res) => {
+  try {
+    const { courseId, feedback, roadmapId, suggestionId } = req.body;
+
+    if (!courseId || !feedback) {
+      return res.status(400).json({
+        success: false,
+        message: 'Course ID and feedback are required'
+      });
+    }
+
+    if (!['helpful', 'not_helpful', 'irrelevant'].includes(feedback)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid feedback type. Must be: helpful, not_helpful, or irrelevant'
+      });
+    }
+
+    // Record the feedback
+    await recordCourseFeedbackService(courseId, feedback, {
+      userId: req.user.id,
+      roadmapId,
+      suggestionId
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Feedback recorded successfully'
+    });
+  } catch (error) {
+    console.error('Error recording course feedback:', error);
     res.status(500).json({
       success: false,
       message: 'Server Error',

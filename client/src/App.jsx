@@ -7,6 +7,7 @@ import RoleBasedNavbar from './components/RoleBasedNavbar';
 // Public pages
 import Auth from './pages/Auth';
 import GoalSelection from './pages/GoalSelection';
+import TypographyShowcase from './components/TypographyShowcase';
 
 // User pages
 import Dashboard from './pages/user/Dashboard';
@@ -31,6 +32,7 @@ function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/auth" element={<Auth />} />
+            <Route path="/typography" element={<TypographyShowcase />} />
 
             {/* Onboarding routes - require authentication but no specific role */}
             <Route

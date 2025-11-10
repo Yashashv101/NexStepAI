@@ -1,5 +1,6 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { aiConfig, getServicePriority } = require('../config/aiConfig');
+const { getCourseSuggestions } = require('./courseSuggestionService');
 
 // Initialize AI clients
 let geminiClient = null;
@@ -336,9 +337,42 @@ Requirements:
                     order: step.order || index + 1,
                 }));
 
+                // Generate course suggestions based on the roadmap
+                let courseSuggestions = null;
+                try {
+                    const suggestionOptions = {
+                        difficultyFilter: parsedRoadmap.difficulty,
+                        maxSuggestions: 6,
+                        minScore: 25
+                    };
+                    
+                    courseSuggestions = await getCourseSuggestions(parsedRoadmap, suggestionOptions);
+                    
+                    if (!courseSuggestions.success || courseSuggestions.suggestions.length === 0) {
+                        // Fallback to popular courses if no relevant suggestions found
+                        const { getPopularCourses } = require('./courseSuggestionService');
+                        const popularCourses = await getPopularCourses(parsedRoadmap.difficulty, 3);
+                        courseSuggestions = {
+                            success: true,
+                            suggestions: popularCourses,
+                            fallback: true,
+                            message: 'Showing popular courses as no highly relevant courses were found'
+                        };
+                    }
+                } catch (courseError) {
+                    console.warn('Course suggestion generation failed:', courseError.message);
+                    courseSuggestions = {
+                        success: false,
+                        error: courseError.message,
+                        suggestions: [],
+                        fallback: true
+                    };
+                }
+
                 return {
                     success: true,
                     roadmap: parsedRoadmap,
+                    courseSuggestions,
                     aiService: response.service,
                     aiModel: response.model,
                 };

@@ -111,20 +111,20 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[var(--bg-900)] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>
-              <p className="text-gray-600 mt-2">Continue your learning journey</p>
+              <h1 className="text-3xl font-bold text-[var(--text-primary)]">Welcome back!</h1>
+              <p className="text-[var(--muted)] mt-2">Continue your learning journey</p>
             </div>
             <Link 
               to="/user/profile" 
-              className="flex items-center px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+              className="flex items-center px-4 py-2 bg-[var(--bg-800)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md hover:bg-[var(--bg-900)] transition-colors"
             >
-              <User className="h-5 w-5 mr-2 text-gray-600" />
+              <User className="h-5 w-5 mr-2 text-[var(--muted)]" />
               Profile
             </Link>
           </div>
@@ -132,52 +132,52 @@ function Dashboard() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-blue-600" />
+              <div className="p-3 rounded-lg bg-[rgba(29,185,84,0.08)]">
+                <TrendingUp className="h-6 w-6 text-[var(--accent-green)]" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">{Math.round(overallProgress)}%</p>
-                <p className="text-sm text-gray-600">Overall Progress</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{Math.round(overallProgress)}%</p>
+                <p className="text-sm text-[var(--muted)]">Overall Progress</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <Target className="h-6 w-6 text-green-600" />
+              <div className="p-3 rounded-lg bg-[rgba(29,185,84,0.08)]">
+                <Target className="h-6 w-6 text-[var(--accent-green)]" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">{dashboardStats.inProgressRoadmaps}</p>
-                <p className="text-sm text-gray-600">Active Roadmaps</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{dashboardStats.inProgressRoadmaps}</p>
+                <p className="text-sm text-[var(--muted)]">Active Roadmaps</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Clock className="h-6 w-6 text-purple-600" />
+              <div className="p-3 rounded-lg bg-[rgba(29,185,84,0.08)]">
+                <Clock className="h-6 w-6 text-[var(--accent-green)]" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-[var(--text-primary)]">
                   {formatTimeSpent(dashboardStats.weeklyTimeSpent || 0)}
                 </p>
-                <p className="text-sm text-gray-600">This Week</p>
+                <p className="text-sm text-[var(--muted)]">This Week</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <Award className="h-6 w-6 text-orange-600" />
+              <div className="p-3 rounded-lg bg-[rgba(29,185,84,0.08)]">
+                <Award className="h-6 w-6 text-[var(--accent-green)]" />
               </div>
               <div className="ml-4">
-                <p className="text-2xl font-bold text-gray-900">{dashboardStats.currentStreak || 0}</p>
-                <p className="text-sm text-gray-600">Day Streak</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)]">{dashboardStats.currentStreak || 0}</p>
+                <p className="text-sm text-[var(--muted)]">Day Streak</p>
               </div>
             </div>
           </div>
@@ -187,31 +187,31 @@ function Dashboard() {
           {/* Active Roadmaps */}
           <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Active Roadmaps</h2>
+              <h2 className="text-xl font-semibold text-[var(--text-primary)]">Active Roadmaps</h2>
               <Link 
                 to="/user/roadmaps" 
-                className="text-blue-600 hover:text-blue-700 flex items-center text-sm"
+                className="text-[var(--accent-green)] hover:text-[var(--accent-green-600)] flex items-center text-sm"
               >
                 View All <ArrowRight className="h-4 w-4 ml-1" />
               </Link>
             </div>
 
             {loading ? (
-              <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-md">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              <div className="flex justify-center items-center h-64 bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--accent-green)]"></div>
               </div>
             ) : error ? (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+              <div className="bg-[var(--bg-800)] border border-[rgba(230,239,239,0.12)] text-red-500 px-4 py-3 rounded-lg mb-6">
                 <p>{error}</p>
               </div>
             ) : roadmapItems.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No active roadmaps</h3>
-                <p className="text-gray-600 mb-4">Start your learning journey by selecting a goal</p>
+              <div className="bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md p-8 text-center">
+                <BookOpen className="mx-auto h-12 w-12 text-[var(--muted)] mb-4" />
+                <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">No active roadmaps</h3>
+                <p className="text-[var(--muted)] mb-4">Start your learning journey by selecting a goal</p>
                 <Link 
                   to="/goal-selection" 
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="inline-flex items-center px-4 py-2 bg-[var(--accent-green)] text-[var(--bg-900)] rounded-lg hover:bg-[var(--accent-green-600)]"
                 >
                   Get Started
                 </Link>
@@ -219,36 +219,36 @@ function Dashboard() {
             ) : (
               <div className="space-y-4">
                 {roadmapItems.slice(0, 3).map((item) => (
-                  <div key={item.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                  <div key={item.id} className="bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
-                        <p className="text-gray-600 text-sm mt-1">{item.description}</p>
+                        <h3 className="text-lg font-semibold text-[var(--text-primary)]">{item.title}</h3>
+                        <p className="text-[var(--muted)] text-sm mt-1">{item.description}</p>
                       </div>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                      <span className="px-3 py-1 bg-[rgba(29,185,84,0.08)] text-[var(--accent-green)] rounded-full text-sm">
                         {item.estimatedTime}
                       </span>
                     </div>
                     
                     <div className="mb-4">
                       <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Progress</span>
-                        <span className="text-sm font-medium text-gray-700">{item.progress}%</span>
+                        <span className="text-sm font-medium text-[var(--muted)]">Progress</span>
+                        <span className="text-sm font-medium text-[var(--muted)]">{item.progress}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-[rgba(255,255,255,0.12)] rounded-full h-2">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all" 
+                          className="bg-[var(--accent-green)] h-2 rounded-full transition-all" 
                           style={{ width: `${item.progress}%` }}
                         ></div>
                       </div>
                     </div>
                     
                     <div className="flex justify-between items-center">
-                      <div className="flex items-center text-sm text-gray-500">
+                      <div className="flex items-center text-sm text-[var(--muted)]">
                         <Calendar className="h-4 w-4 mr-1" />
                         {formatLastUpdated(item.lastUpdated || item.updatedAt)}
                       </div>
-                      <button className="flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
+                      <button className="flex items-center px-4 py-2 bg-[rgba(29,185,84,0.12)] text-[var(--accent-green)] rounded-lg hover:bg-[rgba(29,185,84,0.2)] transition-colors">
                         <Play className="h-4 w-4 mr-2" />
                         Continue
                       </button>
@@ -262,26 +262,21 @@ function Dashboard() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Recent Activity */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+            <div className="bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Recent Activity</h3>
               <div className="space-y-4">
                 {recentActivities.length > 0 ? (
                   recentActivities.map((activity, index) => (
                     <div key={activity._id || index} className="flex items-start">
-                      <div className={`p-2 rounded-lg mr-3 ${
-                        activity.color === 'green' ? 'bg-green-100' :
-                        activity.color === 'blue' ? 'bg-blue-100' :
-                        activity.color === 'purple' ? 'bg-purple-100' :
-                        'bg-gray-100'
-                      }`}>
-                        {activity.icon === 'check-circle' ? <Award className="h-4 w-4 text-green-600" /> :
-                         activity.icon === 'book-open' ? <BookOpen className="h-4 w-4 text-blue-600" /> :
-                         activity.icon === 'target' ? <Target className="h-4 w-4 text-purple-600" /> :
-                         <Award className="h-4 w-4 text-gray-600" />}
+                      <div className={`p-2 rounded-lg mr-3 bg-[rgba(29,185,84,0.08)]`}>
+                        {activity.icon === 'check-circle' ? <Award className="h-4 w-4 text-[var(--accent-green)]" /> :
+                         activity.icon === 'book-open' ? <BookOpen className="h-4 w-4 text-[var(--accent-green)]" /> :
+                         activity.icon === 'target' ? <Target className="h-4 w-4 text-[var(--accent-green)]" /> :
+                         <Award className="h-4 w-4 text-[var(--accent-green)]" />}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm font-medium text-[var(--text-primary)]">{activity.title}</p>
+                        <p className="text-xs text-[var(--muted)]">
                           {new Date(activity.createdAt).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
@@ -294,73 +289,73 @@ function Dashboard() {
                   ))
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-sm text-gray-500">No recent activity</p>
-                    <p className="text-xs text-gray-400 mt-1">Start learning to see your progress here</p>
+                    <p className="text-sm text-[var(--muted)]">No recent activity</p>
+                    <p className="text-xs text-[var(--muted)] mt-1">Start learning to see your progress here</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+            <div className="bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Quick Actions</h3>
               <div className="space-y-3">
                 <Link 
                   to="/goal-selection" 
-                  className="flex items-center w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center w-full p-3 text-left bg-[var(--bg-800)] rounded-lg hover:bg-[var(--bg-900)] transition-colors"
                 >
-                  <Target className="h-5 w-5 text-gray-600 mr-3" />
-                  <span className="text-sm font-medium text-gray-900">Set New Goal</span>
+                  <Target className="h-5 w-5 text-[var(--muted)] mr-3" />
+                  <span className="text-sm font-medium text-[var(--text-primary)]">Set New Goal</span>
                 </Link>
                 <Link 
                   to="/user/roadmaps" 
-                  className="flex items-center w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center w-full p-3 text-left bg-[var(--bg-800)] rounded-lg hover:bg-[var(--bg-900)] transition-colors"
                 >
-                  <BookOpen className="h-5 w-5 text-gray-600 mr-3" />
-                  <span className="text-sm font-medium text-gray-900">Browse Roadmaps</span>
+                  <BookOpen className="h-5 w-5 text-[var(--muted)] mr-3" />
+                  <span className="text-sm font-medium text-[var(--text-primary)]">Browse Roadmaps</span>
                 </Link>
                 <Link 
                   to="/user/profile" 
-                  className="flex items-center w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center w-full p-3 text-left bg-[var(--bg-800)] rounded-lg hover:bg-[var(--bg-900)] transition-colors"
                 >
-                  <User className="h-5 w-5 text-gray-600 mr-3" />
-                  <span className="text-sm font-medium text-gray-900">Update Profile</span>
+                  <User className="h-5 w-5 text-[var(--muted)] mr-3" />
+                  <span className="text-sm font-medium text-[var(--text-primary)]">Update Profile</span>
                 </Link>
               </div>
             </div>
 
             {/* Learning Stats */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">This Week</h3>
+            <div className="bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">This Week</h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Learning Time</span>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm text-[var(--muted)]">Learning Time</span>
+                  <span className="text-sm font-medium text-[var(--text-primary)]">
                     {formatTimeSpent(dashboardStats.weeklyTimeSpent || 0)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Topics Completed</span>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm text-[var(--muted)]">Topics Completed</span>
+                  <span className="text-sm font-medium text-[var(--text-primary)]">
                     {dashboardStats.weeklyTopicsCompleted || 0}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Current Streak</span>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm text-[var(--muted)]">Current Streak</span>
+                  <span className="text-sm font-medium text-[var(--text-primary)]">
                     {dashboardStats.currentStreak || 0} days
                   </span>
                 </div>
-                <div className="pt-2 border-t border-gray-200">
+                <div className="pt-2 border-t border-[rgba(230,239,239,0.12)]">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-600">Weekly Goal</span>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm text-[var(--muted)]">Weekly Goal</span>
+                    <span className="text-sm font-medium text-[var(--text-primary)]">
                       {Math.round(dashboardStats.weeklyGoalProgress || 0)}%
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-[rgba(255,255,255,0.12)] rounded-full h-2">
                     <div 
-                      className="bg-green-600 h-2 rounded-full transition-all" 
+                      className="bg-[var(--accent-green)] h-2 rounded-full transition-all" 
                       style={{ width: `${Math.min(dashboardStats.weeklyGoalProgress || 0, 100)}%` }}
                     ></div>
                   </div>

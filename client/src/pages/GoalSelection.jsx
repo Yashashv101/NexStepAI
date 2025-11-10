@@ -199,16 +199,16 @@ const GoalSelection = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div className="bg-[var(--surface)] border border-[rgba(230,239,239,0.12)] rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
           {/* Modal Header */}
-          <div className="bg-indigo-600 text-white p-6 flex justify-between items-center">
+          <div className="bg-[var(--bg-800)] text-[var(--text-primary)] p-6 flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold">{generatedRoadmap.title}</h2>
-              <p className="text-indigo-100 mt-1">{generatedRoadmap.description}</p>
+              <p className="text-[var(--muted)] mt-1">{generatedRoadmap.description}</p>
             </div>
             <button
               onClick={() => setShowRoadmapModal(false)}
-              className="text-white hover:text-indigo-200 transition-colors"
+              className="text-[var(--muted)] hover:text-[var(--text-primary)] transition-colors"
             >
               <X className="h-6 w-6" />
             </button>
@@ -218,29 +218,29 @@ const GoalSelection = () => {
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
             {/* Roadmap Info */}
             <div className="flex gap-4 mb-6">
-              <div className="bg-indigo-50 rounded-lg p-4 flex-1">
-                <p className="text-sm text-indigo-600 font-medium">Difficulty</p>
-                <p className="text-lg font-bold text-indigo-900 capitalize">{generatedRoadmap.difficulty}</p>
+              <div className="bg-[var(--bg-800)] border border-[rgba(230,239,239,0.12)] rounded-lg p-4 flex-1">
+                <p className="text-sm text-[var(--muted)] font-medium">Difficulty</p>
+                <p className="text-lg font-bold text-[var(--text-primary)] capitalize">{generatedRoadmap.difficulty}</p>
               </div>
-              <div className="bg-green-50 rounded-lg p-4 flex-1">
-                <p className="text-sm text-green-600 font-medium">Duration</p>
-                <p className="text-lg font-bold text-green-900">{generatedRoadmap.estimatedDuration}</p>
+              <div className="bg-[var(--bg-800)] border border-[rgba(230,239,239,0.12)] rounded-lg p-4 flex-1">
+                <p className="text-sm text-[var(--muted)] font-medium">Duration</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{generatedRoadmap.estimatedDuration}</p>
               </div>
-              <div className="bg-purple-50 rounded-lg p-4 flex-1">
-                <p className="text-sm text-purple-600 font-medium">Total Steps</p>
-                <p className="text-lg font-bold text-purple-900">{generatedRoadmap.steps.length}</p>
+              <div className="bg-[var(--bg-800)] border border-[rgba(230,239,239,0.12)] rounded-lg p-4 flex-1">
+                <p className="text-sm text-[var(--muted)] font-medium">Total Steps</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{generatedRoadmap.steps.length}</p>
               </div>
             </div>
 
             {/* Progress Bar */}
             <div className="mb-6">
-              <div className="flex justify-between text-sm text-gray-600 mb-2">
+              <div className="flex justify-between text-sm text-[var(--muted)] mb-2">
                 <span>Your Progress</span>
                 <span>0% Complete</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
+              <div className="w-full bg-[rgba(255,255,255,0.12)] rounded-full h-3">
                 <div
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                  className="bg-[var(--accent-green)] h-3 rounded-full transition-all"
                   style={{ width: '0%' }}
                 ></div>
               </div>
@@ -248,26 +248,26 @@ const GoalSelection = () => {
 
             {/* Roadmap Steps */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Learning Steps</h3>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Learning Steps</h3>
               {generatedRoadmap.steps.map((step, index) => (
                 <div
                   key={index}
-                  className="border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-all"
+                  className="border border-[rgba(230,239,239,0.12)] rounded-lg p-4 hover:border-[var(--accent-green)] transition-all bg-[var(--bg-800)]"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="bg-indigo-100 text-indigo-700 text-sm font-medium px-2 py-1 rounded">
+                        <span className="bg-[rgba(29,185,84,0.12)] text-[var(--accent-green)] text-sm font-medium px-2 py-1 rounded">
                           Step {index + 1}
                         </span>
-                        <h4 className="font-semibold text-gray-900">{step.title}</h4>
+                        <h4 className="font-semibold text-[var(--text-primary)]">{step.title}</h4>
                       </div>
-                      <p className="text-gray-600 text-sm mb-3">{step.description}</p>
-                      <div className="flex flex-wrap gap-2">
+                      <p className="text-[var(--muted)] text-sm mb-3">{step.description}</p>
+                      <div className="flex flex-wrap gap-1">
                         {step.skills.map((skill, skillIndex) => (
                           <span
                             key={skillIndex}
-                            className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded"
+                            className="text-xs px-2 py-1 rounded bg-[rgba(29,185,84,0.08)] text-[var(--accent-green)]"
                           >
                             {skill}
                           </span>
@@ -275,7 +275,7 @@ const GoalSelection = () => {
                       </div>
                     </div>
                     <div className="ml-4">
-                      <span className="text-sm text-gray-500 whitespace-nowrap">
+                      <span className="text-sm text-[var(--muted)] whitespace-nowrap">
                         {step.duration}
                       </span>
                     </div>
@@ -286,10 +286,10 @@ const GoalSelection = () => {
           </div>
 
           {/* Modal Footer */}
-          <div className="border-t border-gray-200 p-6 flex justify-between items-center bg-gray-50">
+          <div className="border-t border-[rgba(230,239,239,0.12)] p-6 flex justify-between items-center bg-[var(--bg-800)]">
             <button
               onClick={() => setShowRoadmapModal(false)}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+              className="px-6 py-2 border border-[rgba(230,239,239,0.12)] text-[var(--text-primary)] rounded-lg bg-[var(--bg-800)] hover:bg-[var(--bg-900)] transition-colors"
               disabled={savingRoadmap}
             >
               Cancel
@@ -297,7 +297,7 @@ const GoalSelection = () => {
             <button
               onClick={handleStartLearning}
               disabled={savingRoadmap}
-              className="px-8 py-3 bg-indigo-600 text-white text-lg font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+              className="px-8 py-3 bg-[var(--accent-green)] text-[var(--bg-900)] text-lg font-medium rounded-lg shadow-md hover:bg-[var(--accent-green-600)] transition-colors disabled:bg-[var(--bg-700)] disabled:text-[var(--muted)] disabled:cursor-not-allowed flex items-center"
             >
               {savingRoadmap ? (
                 <>
@@ -318,8 +318,8 @@ const GoalSelection = () => {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8 flex justify-center items-center min-h-[60vh]">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
-          <p className="mt-4 text-gray-600">Loading career goals...</p>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--accent-green)] border-r-transparent"></div>
+          <p className="mt-4 text-[var(--muted)]">Loading career goals...</p>
         </div>
       </div>
     );
@@ -328,20 +328,20 @@ const GoalSelection = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold text-indigo-700 mb-3">Choose Your Career Path</h1>
-        <p className="text-gray-600 text-lg">Select a career goal and your skill level to get started</p>
+        <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-3">Choose Your Career Path</h1>
+        <p className="text-[var(--muted)] text-lg">Select a career goal and your skill level to get started</p>
       </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 flex items-center">
-          <AlertCircle className="h-5 w-5 mr-2" />
+        <div className="bg-[var(--banner-red)] border border-[rgba(255,99,71,0.28)] text-[var(--text-primary)] px-4 py-3 rounded mb-6 flex items-center">
+          <AlertCircle className="h-5 w-5 text-[#ff7b7b] mr-2" />
           <p>{error}</p>
         </div>
       )}
 
       {/* Step 1: Goal Selection */}
       <div className="mb-10">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+        <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-4">
           Step 1: Select Your Career Goal
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -349,19 +349,18 @@ const GoalSelection = () => {
             goals.map((goal) => (
               <div
                 key={goal.id}
-                className={`p-6 border-2 rounded-xl cursor-pointer transition-all shadow-sm hover:shadow-md ${selectedGoal?.id === goal.id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-300' : 'border-gray-200 hover:border-indigo-300'
-                  }`}
+                className={`p-6 border rounded-xl cursor-pointer transition-all shadow-sm hover:shadow-md ${selectedGoal?.id === goal.id ? 'border-[var(--accent-green)] bg-[rgba(29,185,84,0.08)] ring-2 ring-[rgba(29,185,84,0.28)]' : 'border-[rgba(230,239,239,0.12)] hover:border-[var(--accent-green)]'} bg-[var(--surface)]`}
                 onClick={() => handleGoalSelect(goal)}
               >
                 <div className="flex flex-col items-center text-center">
                   <span className="text-4xl mb-3">{goal.icon}</span>
-                  <h3 className="font-bold text-xl mb-2 text-gray-800">{goal.title}</h3>
-                  <p className="text-gray-600 text-sm mb-3">{goal.description}</p>
+                  <h3 className="font-bold text-xl mb-2 text-[var(--text-primary)]">{goal.title}</h3>
+                  <p className="text-[var(--muted)] text-sm mb-3">{goal.description}</p>
                   <div className="flex gap-2 mt-2">
-                    <span className="text-xs px-2 py-1 bg-gray-100 rounded">
+                    <span className="text-xs px-2 py-1 rounded bg-[rgba(29,185,84,0.08)] text-[var(--accent-green)]">
                       {goal.difficulty}
                     </span>
-                    <span className="text-xs px-2 py-1 bg-gray-100 rounded">
+                    <span className="text-xs px-2 py-1 rounded bg-[rgba(29,185,84,0.08)] text-[var(--accent-green)]">
                       {goal.estimatedTime}
                     </span>
                   </div>
@@ -370,7 +369,7 @@ const GoalSelection = () => {
             ))
           ) : (
             <div className="col-span-3 text-center py-8">
-              <p className="text-gray-500">No career goals available. Please check back later.</p>
+              <p className="text-[var(--muted)]">No career goals available. Please check back later.</p>
             </div>
           )}
         </div>
@@ -379,21 +378,20 @@ const GoalSelection = () => {
       {/* Step 2: Skill Level Selection */}
       {selectedGoal && (
         <div className="mb-10 animate-fadeIn">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+          <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-4">
             Step 2: What's Your Current Skill Level?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {skillLevels.map((level) => (
               <div
                 key={level.id}
-                className={`p-6 border-2 rounded-xl cursor-pointer transition-all shadow-sm hover:shadow-md ${selectedSkillLevel === level.id ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-300' : 'border-gray-200 hover:border-indigo-300'
-                  }`}
+                className={`p-6 border rounded-xl cursor-pointer transition-all shadow-sm hover:shadow-md ${selectedSkillLevel === level.id ? 'border-[var(--accent-green)] bg-[rgba(29,185,84,0.08)] ring-2 ring-[rgba(29,185,84,0.28)]' : 'border-[rgba(230,239,239,0.12)] hover:border-[var(--accent-green)]'} bg-[var(--surface)]`}
                 onClick={() => handleSkillLevelSelect(level.id)}
               >
                 <div className="flex flex-col items-center text-center">
                   <span className="text-4xl mb-3">{level.icon}</span>
-                  <h3 className="font-bold text-xl mb-2 text-gray-800">{level.title}</h3>
-                  <p className="text-gray-600 text-sm">{level.description}</p>
+                  <h3 className="font-bold text-xl mb-2 text-[var(--text-primary)]">{level.title}</h3>
+                  <p className="text-[var(--muted)] text-sm">{level.description}</p>
                 </div>
               </div>
             ))}
@@ -401,16 +399,16 @@ const GoalSelection = () => {
 
           {/* Validation Message */}
           {validationMessage && (
-            <div className={`mt-6 p-4 rounded-lg flex items-center ${validationMessage.type === 'success'
-                ? 'bg-green-50 border border-green-200'
-                : 'bg-amber-50 border border-amber-200'
+            <div className={`mt-6 p-4 rounded-lg flex items-center border ${validationMessage.type === 'success'
+                ? 'bg-[rgba(29,185,84,0.08)] border-[rgba(29,185,84,0.28)]'
+                : 'bg-[var(--banner-yellow)] border-[rgba(255,214,10,0.28)]'
               }`}>
               {validationMessage.type === 'success' ? (
-                <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
+                <CheckCircle className="h-5 w-5 text-[var(--accent-green)] mr-3" />
               ) : (
-                <AlertCircle className="h-5 w-5 text-amber-600 mr-3" />
+                <AlertCircle className="h-5 w-5 text-[#FFD60A] mr-3" />
               )}
-              <p className={`font-medium ${validationMessage.type === 'success' ? 'text-green-800' : 'text-amber-800'
+              <p className={`font-medium ${validationMessage.type === 'success' ? 'text-[var(--accent-green)]' : 'text-[var(--text-primary)]'
                 }`}>
                 {validationMessage.text}
               </p>
@@ -425,7 +423,7 @@ const GoalSelection = () => {
           <button
             onClick={generateRoadmapPreview}
             disabled={generatingRoadmap}
-            className="px-8 py-3 bg-indigo-600 text-white text-lg font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+            className="px-8 py-3 bg-[var(--accent-green)] text-[var(--bg-900)] text-lg font-medium rounded-lg shadow-md hover:bg-[var(--accent-green-600)] transition-colors disabled:bg-[var(--bg-700)] disabled:text-[var(--muted)] disabled:cursor-not-allowed flex items-center"
           >
             {generatingRoadmap ? (
               <>
