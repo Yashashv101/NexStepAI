@@ -11,7 +11,7 @@ import {
   Play,
   User
 } from 'lucide-react';
-import { getRoadmaps, getUserDashboardStats, getUserActivities } from '../../services/api';
+import { getUserRoadmaps, getUserDashboardStats, getUserActivities } from '../../services/api';
 
 function Dashboard() {
   const [roadmapItems, setRoadmapItems] = useState([]);
@@ -37,7 +37,7 @@ function Dashboard() {
         
         // Fetch all dashboard data in parallel
         const [roadmapsResponse, statsResponse, activitiesResponse] = await Promise.all([
-          getRoadmaps(),
+          getUserRoadmaps(),
           getUserDashboardStats(),
           getUserActivities({ limit: 5 })
         ]);

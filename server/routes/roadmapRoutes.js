@@ -15,8 +15,8 @@ const roleAuth = require('../middleware/roleAuth');
 
 const router = express.Router();
 
-// Public routes
-router.route('/').get(getRoadmaps);
+// Public routes (with optional auth for user-specific filtering)
+router.route('/').get(auth, getRoadmaps);
 
 // User routes (authenticated) - MUST come before /:id route
 router.route('/generate-preview').post(auth, generateRoadmapPreview);
@@ -28,8 +28,8 @@ router.route('/user').get(auth, (req, res) => {
 });
 router.route('/user/:userId').get(auth, getUserRoadmaps);
 
-// Public route for specific roadmap - MUST come after /user routes
-router.route('/:id').get(getRoadmap);
+// Public route for specific roadmap (with optional auth for user-specific access control)
+router.route('/:id').get(auth, getRoadmap);
 router.route('/:id/step/:stepId/complete').put(auth, updateStepCompletion);
 
 // Admin only routes

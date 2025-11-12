@@ -508,10 +508,10 @@ const AIRoadmapGenerator = () => {
 
       {generatedRoadmap && generatedRoadmap.roadmap && (
         <div className="space-y-6">
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+          <div className="bg-black border border-blue-200 rounded-lg p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-3">{generatedRoadmap.roadmap.title}</h3>
             {/* Strong contrast container for description to avoid blending with gradient background */}
-            <div className="bg-white rounded-md shadow-sm px-4 py-3 mb-4">
+            <div className="bg-black rounded-md shadow-sm px-4 py-3 mb-4">
               <p className="text-gray-900 leading-relaxed">{generatedRoadmap.roadmap.description}</p>
             </div>
             

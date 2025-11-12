@@ -22,6 +22,14 @@ exports.getRoadmaps = async (req, res) => {
     // Build query
     let query = {};
 
+    // If user is authenticated, only show their own roadmaps
+    if (req.user) {
+      query.userId = req.user.id;
+    } else {
+      // For public access, only show public roadmaps
+      query.isPublic = true;
+    }
+
     if (goalId) {
       query.goalId = goalId;
     }
@@ -93,6 +101,25 @@ exports.getRoadmap = async (req, res) => {
         success: false,
         message: 'Roadmap not found'
       });
+    }
+
+    // Check authorization: user can only access their own roadmaps or public roadmaps
+    if (req.user) {
+      // Authenticated user: can access their own roadmaps or public roadmaps
+      if (roadmap.userId && roadmap.userId.toString() !== req.user.id && !roadmap.isPublic) {
+        return res.status(403).json({
+          success: false,
+          message: 'Not authorized to access this roadmap'
+        });
+      }
+    } else {
+      // Public access: only public roadmaps
+      if (!roadmap.isPublic) {
+        return res.status(403).json({
+          success: false,
+          message: 'Authentication required to access this roadmap'
+        });
+      }
     }
 
     // Get user progress if user is authenticated
