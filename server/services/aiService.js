@@ -1,6 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { aiConfig, getServicePriority } = require('../config/aiConfig');
 const { getCourseSuggestions } = require('./courseSuggestionService');
+const { getCourseRecommendations } = require('./courseRecommender');
 
 // Initialize AI clients
 let geminiClient = null;
@@ -343,10 +344,16 @@ Requirements:
                     const suggestionOptions = {
                         difficultyFilter: parsedRoadmap.difficulty,
                         maxSuggestions: 6,
-                        minScore: 25
+                        minScore: 25,
+                        goalCategory: goalData.category,
+                        goalTags: goalData.tags || [],
+                        goalSkills: [
+                          ...(goalData.skillsRequired || []),
+                          ...(goalData.skillsLearned || [])
+                        ]
                     };
                     
-                    courseSuggestions = await getCourseSuggestions(parsedRoadmap, suggestionOptions);
+                    courseSuggestions = await getCourseRecommendations(parsedRoadmap, suggestionOptions);
                     
                     if (!courseSuggestions.success || courseSuggestions.suggestions.length === 0) {
                         // Fallback to popular courses if no relevant suggestions found

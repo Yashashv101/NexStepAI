@@ -10,7 +10,7 @@ import {
   BookOpen,
   AlertCircle
 } from 'lucide-react';
-import { getUserRoadmaps, getUserProgress, updateStepProgress, resetProgress } from '../../services/api';
+import { getUserRoadmaps, getUserProgress, updateStepProgress, resetProgress, getUserDashboardStats } from '../../services/api';
 import cacheService from '../../services/cacheService';
 
 const RoadmapView = () => {
@@ -20,6 +20,58 @@ const RoadmapView = () => {
   const [error, setError] = useState(null);
   const [userProgress, setUserProgress] = useState({});
   const [updatingStep, setUpdatingStep] = useState(null);
+
+  // Helper: convert duration string to week range
+  const durationToWeekRange = (durationStr) => {
+    if (!durationStr || typeof durationStr !== 'string') return { minWeeks: 0, maxWeeks: 0 };
+    const s = durationStr.toLowerCase().trim();
+    const weekRange = s.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*week/);
+    if (weekRange) {
+      const min = parseFloat(weekRange[1]);
+      const max = parseFloat(weekRange[2]);
+      return { minWeeks: isNaN(min) ? 0 : min, maxWeeks: isNaN(max) ? 0 : max };
+    }
+    const weekSingle = s.match(/(\d+(?:\.\d+)?)\s*week/);
+    if (weekSingle) {
+      const w = parseFloat(weekSingle[1]);
+      return { minWeeks: isNaN(w) ? 0 : w, maxWeeks: isNaN(w) ? 0 : w };
+    }
+    const monthRange = s.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*month/);
+    if (monthRange) {
+      const minM = parseFloat(monthRange[1]);
+      const maxM = parseFloat(monthRange[2]);
+      const minW = isNaN(minM) ? 0 : minM * 4;
+      const maxW = isNaN(maxM) ? 0 : maxM * 4;
+      return { minWeeks: minW, maxWeeks: maxW };
+    }
+    const monthSingle = s.match(/(\d+(?:\.\d+)?)\s*month/);
+    if (monthSingle) {
+      const m = parseFloat(monthSingle[1]);
+      const w = isNaN(m) ? 0 : m * 4;
+      return { minWeeks: w, maxWeeks: w };
+    }
+    return { minWeeks: 0, maxWeeks: 0 };
+  };
+
+  // Compute estimated hours for a step using persisted values or derived from availability
+  const computeStepEstimatedHours = (step) => {
+    if (!step) return 0;
+    // Prefer server-computed estimate if present
+    if (typeof step.estimatedHours === 'number' && step.estimatedHours > 0) {
+      return step.estimatedHours;
+    }
+    const weeklyHours = typeof step.weeklyHours === 'number' && step.weeklyHours > 0
+      ? step.weeklyHours
+      : (selectedRoadmap?.timeAvailabilityHoursPerWeek || 0);
+    if (!weeklyHours || weeklyHours <= 0) return 0;
+    const { minWeeks, maxWeeks } = durationToWeekRange(step.duration || '');
+    const sanitizedMinWeeks = Number.isFinite(minWeeks) && minWeeks >= 0 ? minWeeks : 0;
+    const sanitizedMaxWeeks = Number.isFinite(maxWeeks) && maxWeeks >= sanitizedMinWeeks ? maxWeeks : sanitizedMinWeeks;
+    const minHours = sanitizedMinWeeks * weeklyHours;
+    const maxHours = sanitizedMaxWeeks * weeklyHours;
+    const midpoint = (minHours + maxHours) / 2;
+    return Math.round(midpoint);
+  };
 
   useEffect(() => {
     fetchUserRoadmaps();
@@ -129,10 +181,21 @@ const RoadmapView = () => {
       if (!step) return;
 
       const newCompletedStatus = !step.completed;
+      // Compute precise minutes from user availability and step duration
+      const estimatedHours = computeStepEstimatedHours(step);
+      const minutesToAdd = newCompletedStatus ? Math.max(0, Math.round(estimatedHours * 60)) : 0;
+      const previousTimeSpent = step.timeSpent || 0;
+
+      // Validation: ensure we have a reasonable number to add
+      if (newCompletedStatus && minutesToAdd <= 0) {
+        setError('Cannot compute time for this step. Please ensure your weekly availability is set when generating the roadmap.');
+        setUpdatingStep(null);
+        return;
+      }
 
       // Optimistically update UI
       const updatedSteps = selectedRoadmap.steps.map(step =>
-        step._id === stepId ? { ...step, completed: newCompletedStatus, completedAt: newCompletedStatus ? new Date() : null } : step
+        step._id === stepId ? { ...step, completed: newCompletedStatus, completedAt: newCompletedStatus ? new Date() : null, timeSpent: previousTimeSpent + minutesToAdd } : step
       );
 
       const updatedRoadmap = { ...selectedRoadmap, steps: updatedSteps };
@@ -146,35 +209,80 @@ const RoadmapView = () => {
       // Make API call
       const response = await updateStepProgress(selectedRoadmap._id, stepId, {
         completed: newCompletedStatus,
-        timeSpent: step.timeSpent || 0
+        timeSpent: minutesToAdd
       });
 
       if (response.success) {
         // Invalidate cache
         cacheService.delete('user-roadmaps');
         cacheService.delete(`user-progress-${selectedRoadmap._id}`);
+        cacheService.delete('user-dashboard-stats');
 
         // Update progress data
         setUserProgress(prev => ({ ...prev, [selectedRoadmap._id]: response.data }));
+
+        // Refresh dashboard stats cache to reflect updated learning time
+        try {
+          const statsResp = await getUserDashboardStats();
+          if (statsResp.success) {
+            cacheService.set('user-dashboard-stats', statsResp.data, 5 * 60 * 1000);
+          }
+        } catch (statsErr) {
+          console.warn('Failed to refresh dashboard stats cache:', statsErr);
+        }
       } else {
         throw new Error(response.message || 'Failed to update step');
       }
     } catch (error) {
       console.error('Error updating step completion:', error);
 
-      // Revert optimistic update on error
-      const revertedSteps = selectedRoadmap.steps.map(step =>
-        step._id === stepId ? { ...step, completed: !step.completed } : step
-      );
+      // If progress is missing (404), attempt to create it and retry once
+      const isNotFound = error?.response?.status === 404;
+      let retried = false;
+      if (isNotFound) {
+        try {
+          retried = true;
+          const progressResp = await getUserProgress(selectedRoadmap._id);
+          if (progressResp.success) {
+            const retryResp = await updateStepProgress(selectedRoadmap._id, stepId, {
+              completed: newCompletedStatus,
+              timeSpent: minutesToAdd
+            });
 
+            if (retryResp.success) {
+              cacheService.delete('user-roadmaps');
+              cacheService.delete(`user-progress-${selectedRoadmap._id}`);
+              cacheService.delete('user-dashboard-stats');
+              setUserProgress(prev => ({ ...prev, [selectedRoadmap._id]: retryResp.data }));
+              try {
+                const statsResp = await getUserDashboardStats();
+                if (statsResp.success) {
+                  cacheService.set('user-dashboard-stats', statsResp.data, 5 * 60 * 1000);
+                }
+              } catch (statsErr) {
+                console.warn('Failed to refresh dashboard stats cache after retry:', statsErr);
+              }
+              return; // success after retry; skip revert
+            }
+          }
+        } catch (retryErr) {
+          console.error('Retry after creating progress failed:', retryErr);
+        }
+      }
+
+      // Revert optimistic update on error or failed retry
+      const revertedSteps = selectedRoadmap.steps.map(step =>
+        step._id === stepId ? { ...step, completed: !step.completed, timeSpent: previousTimeSpent } : step
+      );
       const revertedRoadmap = { ...selectedRoadmap, steps: revertedSteps };
       setSelectedRoadmap(revertedRoadmap);
-
-      setRoadmaps(roadmaps.map(roadmap =>
+      setRoadmaps(roadmaps.map(roadmap => (
         roadmap._id === selectedRoadmap._id ? revertedRoadmap : roadmap
-      ));
+      )));
 
-      setError('Failed to update step progress. Please try again.');
+      const friendlyMessage = error?.response?.data?.message
+        || (isNotFound && retried ? 'Could not update step after retry.' : 'Failed to update step progress. Please try again.');
+      setError(friendlyMessage);
     } finally {
       setUpdatingStep(null);
     }
@@ -223,7 +331,8 @@ const RoadmapView = () => {
 
   const getTotalTimeSpent = (steps) => {
     if (!steps || steps.length === 0) return 0;
-    return steps.reduce((total, step) => total + (step.timeSpent || 0), 0);
+    const minutes = steps.reduce((total, step) => total + (step.timeSpent || 0), 0);
+    return Math.round(minutes / 60);
   };
 
   if (loading) {
@@ -472,6 +581,7 @@ const RoadmapView = () => {
                             <div className="flex items-center text-sm text-[var(--muted)]">
                               <Clock className="h-4 w-4 mr-1" />
                               Duration: {step.duration}
+                              {` • Estimated Hours: ${computeStepEstimatedHours(step)} h`}
                             </div>
                           </div>
                           <div className="ml-4">

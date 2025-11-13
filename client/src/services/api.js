@@ -486,9 +486,9 @@ export const generateAIRoadmap = async (goalId, userContext = {}) => {
   }
 };
 
-export const saveAIRoadmap = async (goalId, roadmapData, aiService = 'gemini', aiModel = 'unknown') => {
+export const saveAIRoadmap = async (goalId, roadmapData, aiService = 'gemini', aiModel = 'unknown', timeAvailability = '') => {
   try {
-    const payload = { goalId, roadmapData, aiService, aiModel };
+    const payload = { goalId, roadmapData, aiService, aiModel, timeAvailability };
     const response = await api.post('/ai/save-roadmap', payload);
     return response.data;
   } catch (error) {

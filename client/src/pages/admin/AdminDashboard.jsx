@@ -19,7 +19,8 @@ const AdminDashboard = () => {
     totalUsers: 0,
     totalGoals: 0,
     totalRoadmaps: 0,
-    recentActivities: []
+    recentActivities: [],
+    activeRoadmaps: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -180,6 +181,13 @@ const AdminDashboard = () => {
             value={stats.totalRoadmaps}
             color="bg-purple-500"
             link="/admin/roadmaps"
+          />
+          <StatCard
+            icon={TrendingUp}
+            title="Active Roadmaps"
+            value={stats.activeRoadmaps}
+            color="bg-orange-500"
+            link="/admin/analytics"
           />
         </div>
 

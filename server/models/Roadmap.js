@@ -36,6 +36,12 @@ const RoadmapSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a category']
   },
+  // Canonical weekly availability captured at roadmap creation (hours per week)
+  timeAvailabilityHoursPerWeek: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
   steps: [{
     title: {
       type: String,
@@ -49,6 +55,25 @@ const RoadmapSchema = new mongoose.Schema({
     duration: {
       type: String,
       required: true
+    },
+    // Optional per-step override for weekly hours; defaults to roadmap availability
+    weeklyHours: {
+      type: Number,
+      min: 0
+    },
+    // Estimated hours derived from duration (weeks/months) × weeklyHours
+    estimatedHours: {
+      type: Number,
+      min: 0
+    },
+    // Optional range support when duration is expressed as a range (e.g., 1-2 weeks)
+    estimatedHoursMin: {
+      type: Number,
+      min: 0
+    },
+    estimatedHoursMax: {
+      type: Number,
+      min: 0
     },
     resources: [{
       type: mongoose.Schema.Types.ObjectId,

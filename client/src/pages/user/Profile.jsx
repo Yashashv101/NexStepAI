@@ -85,9 +85,9 @@ const Profile = () => {
       const cachedStats = cacheService.get('user-dashboard-stats');
       if (cachedStats) {
         setStats({
-          goalsCompleted: cachedStats.completedGoals || 0,
-          roadmapsInProgress: cachedStats.activeRoadmaps || 0,
-          totalLearningTime: Math.round((cachedStats.weeklyLearningTime || 0) * 4) // Convert weekly to monthly estimate
+          goalsCompleted: cachedStats.completedRoadmaps || 0,
+          roadmapsInProgress: cachedStats.inProgressRoadmaps || 0,
+          totalLearningTime: Math.round(((cachedStats.weeklyTimeSpent || 0) * 4) / 60) // minutes → monthly hours
         });
         setLoadingStats(false);
         return;
@@ -98,9 +98,9 @@ const Profile = () => {
       if (response.success) {
         const data = response.data;
         setStats({
-          goalsCompleted: data.completedGoals || 0,
-          roadmapsInProgress: data.activeRoadmaps || 0,
-          totalLearningTime: Math.round((data.weeklyLearningTime || 0) * 4) // Convert weekly to monthly estimate
+          goalsCompleted: data.completedRoadmaps || 0,
+          roadmapsInProgress: data.inProgressRoadmaps || 0,
+          totalLearningTime: Math.round(((data.weeklyTimeSpent || 0) * 4) / 60) // minutes → monthly hours
         });
         
         // Cache the stats data

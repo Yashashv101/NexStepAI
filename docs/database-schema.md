@@ -70,16 +70,23 @@ Stores learning roadmaps with structured steps.
   goalId: ObjectId,       // Reference to Goal
   category: String,
   difficulty: String,
-  estimatedDuration: Number, // In days
+  estimatedDuration: String, // e.g., '6 weeks', '1-2 months'
+  timeAvailabilityHoursPerWeek: Number, // Persisted user availability used for conversions
   steps: [{
     _id: ObjectId,
     title: String,
     description: String,
     order: Number,
-    estimatedTime: Number, // In hours
+    duration: String,      // e.g., '2 weeks', '1-3 months'
     resources: [ObjectId], // References to Resources
-    isCompleted: Boolean,
-    completedAt: Date
+    skills: [String],
+    completed: Boolean,
+    completedAt: Date,
+    // Derived fields for precision and validation
+    weeklyHours: Number,        // Hours per week applied to this step
+    estimatedHours: Number,     // Midpoint hours estimate for this step
+    estimatedHoursMin: Number,  // Minimum hours based on duration range
+    estimatedHoursMax: Number   // Maximum hours based on duration range
   }],
   tags: [String],
   isPublished: Boolean,

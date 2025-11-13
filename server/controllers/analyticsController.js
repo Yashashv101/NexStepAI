@@ -144,19 +144,25 @@ exports.getAdminStats = async (req, res) => {
         totalUsers,
         totalGoals,
         totalRoadmaps,
-        recentActivities
+        recentActivities,
+        activeRoadmaps
       ] = await Promise.all([
         User.countDocuments({ status: 'active' }),
         Goal.countDocuments(),
         Roadmap.countDocuments(),
-        getRecentActivities()
+        getRecentActivities(),
+        // Active roadmaps across the platform based on user progress status
+        UserProgress.distinct('roadmapId', {
+          status: { $in: ['in_progress', 'not_started'] }
+        }).then(ids => ids.length)
       ]);
 
       return {
         totalUsers,
         totalGoals,
         totalRoadmaps,
-        recentActivities
+        recentActivities,
+        activeRoadmaps
       };
     }, 3 * 60 * 1000); // Cache for 3 minutes
 

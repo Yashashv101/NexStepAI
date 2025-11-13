@@ -171,7 +171,8 @@ const AIRoadmapGenerator = () => {
         selectedGoalId,
         generatedRoadmap.roadmap,
         generatedRoadmap.aiService || 'gemini',
-        generatedRoadmap.aiModel || 'unknown'
+        generatedRoadmap.aiModel || 'unknown',
+        userContext.timeAvailability || ''
       );
 
       setSuccess('Roadmap saved successfully! Redirecting to your roadmaps...');
@@ -564,6 +565,60 @@ const AIRoadmapGenerator = () => {
               ))}
             </div>
           </div>
+
+          {/* Integrated Local Course Recommendations from Courses.py */}
+          {Array.isArray(generatedRoadmap.courseRecommendations) && generatedRoadmap.courseRecommendations.length > 0 && (
+            <div className="border border-gray-200 rounded-lg p-6 bg-white">
+              <div className="flex items-center mb-3">
+                <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
+                <h4 className="text-lg font-semibold text-gray-900">Course Recommendations</h4>
+                <span className="ml-2 text-sm text-gray-500">(from local modules)</span>
+              </div>
+
+              <div className="space-y-4">
+                {generatedRoadmap.courseRecommendations.map((course, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2">
+                      <h5 className="font-semibold text-gray-900 mb-2 sm:mb-0 sm:mr-3">{course.title}</h5>
+                      <div className="flex items-center space-x-3 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-1" />
+                          <span>Relevance: {Math.min(Math.max(Math.round(course.relevanceScore), 0), 100)}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {course.description && (
+                      <p className="text-gray-700 text-sm mb-3">{course.description}</p>
+                    )}
+
+                    {Array.isArray(course.relevanceReasons) && course.relevanceReasons.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {course.relevanceReasons.map((reason, rIdx) => (
+                          <span key={rIdx} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                            {reason}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {course.url && (
+                      <div className="mt-3">
+                        <a
+                          href={course.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          View Course
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Course Suggestions Component */}
           <CourseSuggestions 

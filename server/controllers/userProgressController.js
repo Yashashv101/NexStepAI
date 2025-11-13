@@ -65,24 +65,54 @@ exports.updateStepProgress = async (req, res) => {
     const userId = req.user.id;
     
     let progress = await UserProgress.findOne({ userId, roadmapId });
-    
+
+    // If progress does not exist, create it from the roadmap
     if (!progress) {
-      return res.status(404).json({
-        success: false,
-        message: 'Progress record not found'
+      const roadmap = await Roadmap.findById(roadmapId);
+      if (!roadmap) {
+        return res.status(404).json({
+          success: false,
+          message: 'Roadmap not found'
+        });
+      }
+
+      progress = await UserProgress.create({
+        userId,
+        roadmapId,
+        goalId: roadmap.goalId,
+        stepProgress: roadmap.steps.map(step => ({
+          stepId: step._id,
+          completed: false,
+          timeSpent: 0,
+          notes: ''
+        }))
       });
     }
     
     // Find and update the specific step
-    const stepIndex = progress.stepProgress.findIndex(
+    let stepIndex = progress.stepProgress.findIndex(
       step => step.stepId.toString() === stepId
     );
-    
+
+    // If the step is missing in progress (e.g., roadmap updated), add it
     if (stepIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'Step not found in progress'
+      const roadmap = await Roadmap.findById(roadmapId);
+      const stepExists = roadmap?.steps.id(stepId);
+
+      if (!stepExists) {
+        return res.status(404).json({
+          success: false,
+          message: 'Step not found in roadmap'
+        });
+      }
+
+      progress.stepProgress.push({
+        stepId: stepId,
+        completed: false,
+        timeSpent: 0,
+        notes: ''
       });
+      stepIndex = progress.stepProgress.length - 1;
     }
     
     const stepProgress = progress.stepProgress[stepIndex];
@@ -104,21 +134,22 @@ exports.updateStepProgress = async (req, res) => {
     // Log activity for step completion
     if (completed && !wasCompleted) {
       const roadmap = await Roadmap.findById(roadmapId);
-      const step = roadmap.steps.id(stepId);
-      
-      await Activity.createActivity({
-        userId,
-        type: 'step_completed',
-        title: `Completed step: ${step.title}`,
-        description: `Finished step in ${roadmap.title}`,
-        metadata: {
-          roadmapId,
-          stepId,
-          timeSpent: stepProgress.timeSpent
-        },
-        icon: 'check-circle',
-        color: 'green'
-      });
+      const step = roadmap?.steps.id(stepId);
+      if (roadmap && step) {
+        await Activity.createActivity({
+          userId,
+          type: 'step_completed',
+          title: `Completed step: ${step.title}`,
+          description: `Finished step in ${roadmap.title}`,
+          metadata: {
+            roadmapId,
+            stepId,
+            timeSpent: stepProgress.timeSpent
+          },
+          icon: 'check-circle',
+          color: 'green'
+        });
+      }
     }
     
     res.status(200).json({

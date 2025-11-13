@@ -3,6 +3,7 @@ const Activity = require('../models/Activity');
 const UserProgress = require('../models/UserProgress');
 const Goal = require('../models/Goal');
 const Roadmap = require('../models/Roadmap');
+const mongoose = require('mongoose');
 
 // @desc    Get all users (Admin only)
 // @route   GET /api/users
@@ -57,16 +58,17 @@ exports.getUsers = async (req, res) => {
   }
 };
 
-// @desc    Get user dashboard stats
-// @route   GET /api/users/dashboard-stats
-// @access  Private
+  // @desc    Get user dashboard stats
+  // @route   GET /api/users/dashboard-stats
+  // @access  Private
 exports.getUserDashboardStats = async (req, res) => {
   try {
     const userId = req.user.id;
+    const userObjectId = new mongoose.Types.ObjectId(userId);
     
     // Get user progress statistics
     const progressStats = await UserProgress.aggregate([
-      { $match: { userId: userId } },
+      { $match: { userId: userObjectId } },
       {
         $group: {
           _id: null,
@@ -74,8 +76,12 @@ exports.getUserDashboardStats = async (req, res) => {
           completedRoadmaps: {
             $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
           },
+          // Count active roadmaps: include both 'in_progress' and 'not_started'
+          // so newly started roadmaps are reflected as Active on dashboard
           inProgressRoadmaps: {
-            $sum: { $cond: [{ $eq: ['$status', 'in_progress'] }, 1, 0] }
+            $sum: {
+              $cond: [{ $in: ['$status', ['in_progress', 'not_started']] }, 1, 0]
+            }
           },
           totalTimeSpent: { $sum: '$totalTimeSpent' },
           averageProgress: { $avg: '$overallProgress' }
@@ -103,7 +109,7 @@ exports.getUserDashboardStats = async (req, res) => {
     weekStart.setHours(0, 0, 0, 0);
 
     const weeklyProgress = await UserProgress.aggregate([
-      { $match: { userId: userId, lastActivityAt: { $gte: weekStart } } },
+      { $match: { userId: userObjectId, lastActivityAt: { $gte: weekStart } } },
       {
         $group: {
           _id: null,

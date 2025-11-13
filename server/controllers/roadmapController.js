@@ -22,9 +22,11 @@ exports.getRoadmaps = async (req, res) => {
     // Build query
     let query = {};
 
-    // If user is authenticated, only show their own roadmaps
+    // If user is authenticated and NOT an admin, only show their own roadmaps
     if (req.user) {
-      query.userId = req.user.id;
+      if (req.user.role !== 'admin') {
+        query.userId = req.user.id;
+      }
     } else {
       // For public access, only show public roadmaps
       query.isPublic = true;
@@ -683,25 +685,65 @@ exports.getUserRoadmaps = async (req, res) => {
 
     let query = { userId: userId };
 
+    // If status is provided and not 'all', filter by roadmap status
     if (status && status !== 'all') {
       query.status = status;
     }
 
+    // Get roadmaps with their corresponding user progress
     const roadmaps = await Roadmap.find(query)
       .populate('goalId', 'name category')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
+    // Get user progress for each roadmap to determine actual status
+    const roadmapIds = roadmaps.map(roadmap => roadmap._id);
+    const userProgressMap = new Map();
+    
+    if (roadmapIds.length > 0) {
+      const userProgress = await UserProgress.find({
+        userId: userId,
+        roadmapId: { $in: roadmapIds }
+      }).select('roadmapId status overallProgress');
+      
+      userProgress.forEach(progress => {
+        userProgressMap.set(progress.roadmapId.toString(), progress);
+      });
+    }
+
+    // Enhance roadmaps with user progress data
+    const enhancedRoadmaps = roadmaps.map(roadmap => {
+      const progress = userProgressMap.get(roadmap._id.toString());
+      const roadmapObj = roadmap.toObject();
+      
+      if (progress) {
+        // Use user progress status instead of roadmap status for consistency
+        roadmapObj.actualStatus = progress.status;
+        roadmapObj.userProgress = progress.overallProgress;
+      } else {
+        roadmapObj.actualStatus = 'not_started';
+        roadmapObj.userProgress = 0;
+      }
+      
+      return roadmapObj;
+    });
+
+    // Filter by actual status if requested
+    let filteredRoadmaps = enhancedRoadmaps;
+    if (status && status !== 'all') {
+      filteredRoadmaps = enhancedRoadmaps.filter(roadmap => roadmap.actualStatus === status);
+    }
+
     const total = await Roadmap.countDocuments(query);
 
     res.status(200).json({
       success: true,
-      count: roadmaps.length,
+      count: filteredRoadmaps.length,
       total,
       page: parseInt(page),
       pages: Math.ceil(total / limit),
-      data: roadmaps
+      data: filteredRoadmaps
     });
   } catch (error) {
     console.error('Error fetching user roadmaps:', error);

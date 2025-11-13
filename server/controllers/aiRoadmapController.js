@@ -3,6 +3,227 @@ const Roadmap = require('../models/Roadmap');
 const Activity = require('../models/Activity');
 const { generateRoadmap, enhanceGoal } = require('../services/aiService');
 const { getCourseSuggestions: getCourseSuggestionsService, recordCourseFeedback: recordCourseFeedbackService } = require('../services/courseSuggestionService');
+const fs = require('fs');
+const path = require('path');
+
+// Helpers: parse availability and convert duration strings to week ranges
+function parseHoursPerWeek(input) {
+  if (!input || typeof input !== 'string') return 0;
+  const cleaned = input.toLowerCase().trim();
+  // Extract numbers, handle ranges like "8-12"
+  const rangeMatch = cleaned.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+  if (rangeMatch) {
+    const min = parseFloat(rangeMatch[1]);
+    const max = parseFloat(rangeMatch[2]);
+    if (!isNaN(min) && !isNaN(max) && min > 0 && max > 0) {
+      // Use midpoint for planning; still store min/max if needed later
+      return Math.round(((min + max) / 2) * 10) / 10;
+    }
+  }
+  const singleMatch = cleaned.match(/(\d+(?:\.\d+)?)/);
+  if (singleMatch) {
+    const val = parseFloat(singleMatch[1]);
+    return isNaN(val) ? 0 : val;
+  }
+  return 0;
+}
+
+function durationToWeekRange(durationStr) {
+  if (!durationStr || typeof durationStr !== 'string') return { minWeeks: 0, maxWeeks: 0 };
+  const s = durationStr.toLowerCase().trim();
+  // Normalize common forms: "X weeks", "X-Y weeks", "1 month", "X-Y months"
+  const weekRange = s.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*week/);
+  if (weekRange) {
+    const min = parseFloat(weekRange[1]);
+    const max = parseFloat(weekRange[2]);
+    return { minWeeks: isNaN(min) ? 0 : min, maxWeeks: isNaN(max) ? 0 : max };
+  }
+  const weekSingle = s.match(/(\d+(?:\.\d+)?)\s*week/);
+  if (weekSingle) {
+    const w = parseFloat(weekSingle[1]);
+    return { minWeeks: isNaN(w) ? 0 : w, maxWeeks: isNaN(w) ? 0 : w };
+  }
+  const monthRange = s.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*month/);
+  if (monthRange) {
+    const minM = parseFloat(monthRange[1]);
+    const maxM = parseFloat(monthRange[2]);
+    const minW = isNaN(minM) ? 0 : minM * 4; // approximate 4 weeks per month
+    const maxW = isNaN(maxM) ? 0 : maxM * 4;
+    return { minWeeks: minW, maxWeeks: maxW };
+  }
+  const monthSingle = s.match(/(\d+(?:\.\d+)?)\s*month/);
+  if (monthSingle) {
+    const m = parseFloat(monthSingle[1]);
+    const w = isNaN(m) ? 0 : m * 4;
+    return { minWeeks: w, maxWeeks: w };
+  }
+  return { minWeeks: 0, maxWeeks: 0 };
+}
+
+// Course recommendations integration
+// Resolve absolute path for Courses.py across Windows/Unix style paths
+function resolveCoursesPyPath() {
+  const candidates = [
+    // Windows absolute path variants
+    'C\\\\Users\\\\yasha\\\\Documents\\\\NexStepAI\\\\ai-ml\\\\modules\\\\Courses.py',
+    'C:/Users/yasha/Documents/NexStepAI/ai-ml/modules/Courses.py',
+    '/C:/Users/yasha/Documents/NexStepAI/ai-ml/modules/Courses.py',
+    // Repo-relative fallbacks
+    path.resolve(__dirname, '../../ai-ml/modules/Courses.py'),
+    path.resolve(process.cwd(), 'ai-ml/modules/Courses.py')
+  ];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) {
+        return p;
+      }
+    } catch (_) {
+      // ignore
+    }
+  }
+  return null;
+}
+
+// Parse course lists from Courses.py (lists of [title, url]) grouped by category variable name
+function parseCoursesPy(pyContent) {
+  if (!pyContent || typeof pyContent !== 'string') return null;
+  const lines = pyContent.split(/\r?\n/);
+  const data = {};
+  let currentKey = null;
+  let inList = false;
+  for (let rawLine of lines) {
+    const line = rawLine.trim();
+    // Start of a course list (we only consider *_course variables)
+    const startMatch = line.match(/^([A-Za-z0-9_]+)_course\s*=\s*\[/);
+    if (startMatch) {
+      currentKey = startMatch[1] + '_course';
+      data[currentKey] = [];
+      inList = true;
+      continue;
+    }
+    if (inList) {
+      // End of list
+      if (line === ']' || line === '],') {
+        inList = false;
+        currentKey = null;
+        continue;
+      }
+      // Match course pair: ['Title', 'URL'] or ["Title", "URL"]
+      const pairMatch = line.match(/\[\s*(['"])(.*?)\1\s*,\s*(['"])(.*?)\3\s*\]/);
+      if (pairMatch && currentKey) {
+        const title = pairMatch[2];
+        const url = pairMatch[4];
+        if (title && url) {
+          data[currentKey].push({ title, url });
+        }
+      }
+    }
+  }
+  // Ensure we found at least one course list
+  const keys = Object.keys(data).filter(k => Array.isArray(data[k]) && data[k].length > 0);
+  if (keys.length === 0) return null;
+  return data;
+}
+
+// Map goal categories or keywords to Courses.py keys
+function inferCourseCategory(goalCategory, keywords = []) {
+  const c = (goalCategory || '').toLowerCase();
+  const kw = (keywords || []).map(k => String(k).toLowerCase());
+  const hasAny = (arr) => kw.some(k => arr.some(a => k.includes(a) || a.includes(k)));
+
+  if (c.includes('data') || c.includes('ml') || c.includes('machine')) return 'ds_course';
+  if (c.includes('web') || c.includes('frontend') || c.includes('full stack')) return 'web_course';
+  if (c.includes('android') || hasAny(['android', 'kotlin'])) return 'android_course';
+  if (c.includes('ios') || c.includes('swift') || hasAny(['swift', 'ios'])) return 'ios_course';
+  if (c.includes('ux') || c.includes('ui') || c.includes('design') || hasAny(['ux', 'ui', 'design'])) return 'uiux_course';
+  // Fallback: choose based on keywords
+  if (hasAny(['react', 'node', 'django', 'flask'])) return 'web_course';
+  if (hasAny(['tensorflow', 'data', 'machine'])) return 'ds_course';
+  return null;
+}
+
+function tokenize(text) {
+  if (!text) return [];
+  return String(text)
+    .toLowerCase()
+    .replace(/[^a-z0-9+\-\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function computeRelevance(courseTitle, goalCategory, keywords) {
+  const title = String(courseTitle || '').toLowerCase();
+  let score = 0;
+  const reasons = [];
+  if (goalCategory && title.includes(goalCategory.toLowerCase())) {
+    score += 30;
+    reasons.push('Matches goal category');
+  }
+  const matched = [];
+  for (const kw of (keywords || [])) {
+    if (kw.length > 2 && title.includes(kw)) {
+      score += 10;
+      matched.push(kw);
+    }
+  }
+  if (matched.length) reasons.push(`Keyword match: ${matched.join(', ')}`);
+  return { score, matched };
+}
+
+function buildCourseRecommendations(goal, roadmap, pyCourses) {
+  try {
+    if (!pyCourses) return [];
+    // Collect keywords from steps and goal tags/skills
+    const stepKeywords = new Set();
+    const addTokens = (val) => tokenize(val).forEach(t => stepKeywords.add(t));
+    if (Array.isArray(roadmap?.steps)) {
+      for (const s of roadmap.steps) {
+        addTokens(s?.title);
+        addTokens(s?.description);
+        if (Array.isArray(s?.skills)) s.skills.forEach(addTokens);
+      }
+    }
+    if (Array.isArray(goal?.tags)) goal.tags.forEach(addTokens);
+    if (Array.isArray(goal?.skillsRequired)) goal.skillsRequired.forEach(addTokens);
+    if (Array.isArray(goal?.skillsLearned)) goal.skillsLearned.forEach(addTokens);
+    const keywords = Array.from(stepKeywords);
+
+    const categoryKey = inferCourseCategory(goal?.category, keywords);
+    if (!categoryKey || !pyCourses[categoryKey] || pyCourses[categoryKey].length === 0) {
+      return [];
+    }
+
+    // Deduplicate by title
+    const seen = new Set();
+    const candidates = pyCourses[categoryKey].filter(c => {
+      const key = (c.title || '').trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    // Score and pick top matches
+    const scored = candidates.map(c => {
+      const { score, matched } = computeRelevance(c.title, goal?.category, keywords);
+      return {
+        title: c.title,
+        url: c.url,
+        category: categoryKey,
+        relevanceScore: score,
+        relevanceReasons: matched.length ? [`Keyword match: ${matched.join(', ')}`] : (goal?.category ? ['Goal category alignment'] : []),
+        description: matched.length ? `Covers ${matched.join(', ')} topics relevant to your roadmap.` : 'Relevant course for your goal category.'
+      };
+    });
+
+    // Sort by relevance and select top 5
+    scored.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    const top = scored.slice(0, 5).filter(r => r.relevanceScore > 0);
+    return top;
+  } catch (err) {
+    // Graceful fallback: no recommendations
+    return [];
+  }
+}
 
 // @desc    Submit a user goal and get AI enhancement suggestions
 // @route   POST /api/ai/enhance-goal
@@ -169,12 +390,29 @@ exports.generateAIRoadmap = async (req, res) => {
     console.log(`Generating AI roadmap for goal: ${goal.name}`);
     const result = await generateRoadmap(goalData, userContext || {});
 
+    // Attempt to load course data and build recommendations
+    let courseRecommendations = [];
+    const coursesPath = resolveCoursesPyPath();
+    if (coursesPath) {
+      try {
+        const content = fs.readFileSync(coursesPath, 'utf-8');
+        const pyCourses = parseCoursesPy(content);
+        if (pyCourses) {
+          courseRecommendations = buildCourseRecommendations(goal, result.roadmap, pyCourses);
+        }
+      } catch (_) {
+        // Silent fallback: if parsing fails, proceed without recommendations
+        courseRecommendations = [];
+      }
+    }
+
     res.status(200).json({
       success: true,
       data: {
         roadmap: result.roadmap,
         goalId: goal._id,
-        goalName: goal.name
+        goalName: goal.name,
+        courseRecommendations
       },
       aiService: result.aiService,
       aiModel: result.aiModel
@@ -198,7 +436,8 @@ exports.saveAIRoadmap = async (req, res) => {
       goalId,
       roadmapData,
       aiService,
-      aiModel
+      aiModel,
+      timeAvailability
     } = req.body;
 
     // Validate required fields
@@ -239,6 +478,37 @@ exports.saveAIRoadmap = async (req, res) => {
       });
     }
 
+    // Parse and validate time availability
+    const hoursPerWeek = parseHoursPerWeek(timeAvailability);
+    if (hoursPerWeek < 0 || hoursPerWeek > 168) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid time availability. Please provide a value between 0 and 168 hours/week.'
+      });
+    }
+
+    // Precompute estimated hours for each step based on duration and availability
+    const computedSteps = roadmapData.steps.map((step, index) => {
+      const { minWeeks, maxWeeks } = durationToWeekRange(step.duration);
+      // Validate week values
+      const sanitizedMinWeeks = Number.isFinite(minWeeks) && minWeeks >= 0 ? minWeeks : 0;
+      const sanitizedMaxWeeks = Number.isFinite(maxWeeks) && maxWeeks >= sanitizedMinWeeks ? maxWeeks : sanitizedMinWeeks;
+      const weeklyHours = step.weeklyHours && step.weeklyHours > 0 ? step.weeklyHours : hoursPerWeek;
+      const minHours = Math.round(sanitizedMinWeeks * weeklyHours);
+      const maxHours = Math.round(sanitizedMaxWeeks * weeklyHours);
+      const midpointHours = Math.round(((minHours + maxHours) / 2));
+
+      return {
+        ...step,
+        order: step.order || index + 1,
+        completed: false,
+        weeklyHours: weeklyHours || undefined,
+        estimatedHours: midpointHours,
+        estimatedHoursMin: minHours,
+        estimatedHoursMax: maxHours
+      };
+    });
+
     // Create the roadmap with AI metadata
     const roadmap = await Roadmap.create({
       title: roadmapData.title,
@@ -248,11 +518,8 @@ exports.saveAIRoadmap = async (req, res) => {
       difficulty: roadmapData.difficulty || goal.difficulty,
       estimatedDuration: roadmapData.estimatedDuration,
       category: goal.category,
-      steps: roadmapData.steps.map((step, index) => ({
-        ...step,
-        order: step.order || index + 1,
-        completed: false
-      })),
+      timeAvailabilityHoursPerWeek: hoursPerWeek || 0,
+      steps: computedSteps,
       tags: roadmapData.tags || goal.tags || [],
       skillsRequired: roadmapData.skillsRequired || goal.skillsRequired || [],
       skillsLearned: roadmapData.skillsLearned || goal.skillsLearned || [],
@@ -262,7 +529,7 @@ exports.saveAIRoadmap = async (req, res) => {
         service: (aiService && ['gemini', 'manual'].includes(aiService)) ? aiService : 'gemini',
         model: aiModel || 'unknown',
         generatedAt: new Date(),
-        prompt: `Generated for goal: ${goal.name}`
+        prompt: `Generated for goal: ${goal.name}${hoursPerWeek ? ` | Availability: ${hoursPerWeek} hours/week` : ''}`
       },
       moderationStatus: 'approved', // Auto-approve, can change to 'pending'
       isPublic: false
